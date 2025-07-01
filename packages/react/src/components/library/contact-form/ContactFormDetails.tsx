@@ -13,7 +13,7 @@ import { FormPhoto } from '../../utils/form-photo/FormPhoto';
 import { ContactStatus } from '../../utils/contact-status/ContactStatus';
 import { FormTextbox } from '../../utils/form-textbox/FormTextbox';
 
-import { Contact } from '../../../types/crm-contact';
+import { ITotalProfit } from '@/types/totalProfit';
 import { CONTACT_STATUS_LIST } from '../../../shared/constants';
 
 const PHOTO_SIZE = 184;
@@ -34,7 +34,7 @@ const statusRender = (text: string) => (
 const statusItemRender = (text: string) => <ContactStatus text={text} />;
 
 export const ContactFromDetails = ({ data, editing, updateField }: {
-  data: Contact, editing: boolean, updateField: (field: string | number) => (value: string | number) => void
+  data: ITotalProfit, editing: boolean, updateField: (field: string | number) => (value: string | number) => void
 }) => {
   const stylingMode = 'filled';
   return (

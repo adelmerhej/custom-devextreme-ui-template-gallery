@@ -2,13 +2,13 @@
 import React, { useEffect, useState } from 'react';
 
 import Form, { Item as FormItem, GroupItem, ColCountByScreen } from 'devextreme-react/form';
-import { Contact } from '../../../types/crm-contact';
+import { ITotalProfit } from '@/types/totalProfit';
 import { FormTextbox, FormPhotoUploader } from '../..';
 import { EmailRule } from 'devextreme-react/validator';
 import { getSizeQualifier } from '../../../utils/media-query';
 
-export const ContactNewForm = ({ initData, onDataChanged }: { initData: Contact, onDataChanged: (data) => void }) => {
-  const [newContactData, setNewContactData] = useState<Contact>({ ...initData });
+export const ContactNewForm = ({ initData, onDataChanged }: { initData: ITotalProfit, onDataChanged: (data) => void }) => {
+  const [newContactData, setNewContactData] = useState<ITotalProfit>({ ...initData });
 
   useEffect(() => {
     setNewContactData({ ...initData });

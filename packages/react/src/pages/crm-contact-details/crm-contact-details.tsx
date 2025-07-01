@@ -9,7 +9,7 @@ import {
   ContactForm,
 } from '../../components';
 
-import { Contact } from '../../types/crm-contact';
+import { ITotalProfit } from '../../types/totalProfit';
 
 import {
   getContact,
@@ -25,7 +25,7 @@ import ScrollView from 'devextreme-react/scroll-view';
 const CONTACT_ID = 12;
 
 export const CRMContactDetails = () => {
-  const [data, setData] = useState<Contact>();
+  const [data, setData] = useState<ITotalProfit>();
   const [notes, setNotes] = useState();
   const [messages, setMessages] = useState([]);
   const [activeOpportunities, setActiveOpportunities] = useState();

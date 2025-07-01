@@ -5,7 +5,7 @@ import { ContactFromDetails } from './ContactFormDetails';
 
 import { withLoadPanel } from '../../../utils/withLoadPanel';
 
-import { Contact } from '../../../types/crm-contact';
+import { ITotalProfit } from '@/types/totalProfit';
 
 import ValidationGroup from 'devextreme-react/validation-group';
 
@@ -13,10 +13,10 @@ import './ContactForm.scss';
 
 const ContactFromDetailsWithLoadPanel = withLoadPanel(ContactFromDetails);
 
-export const ContactForm = ({ data, isLoading = false }: { data?: Contact, isLoading: boolean }) => {
+export const ContactForm = ({ data, isLoading = false }: { data?: ITotalProfit, isLoading: boolean }) => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState(data);
-  const dataRef = useRef<Contact>();
+  const dataRef = useRef<ITotalProfit>();
 
   useEffect(() => {
     setFormData(data);

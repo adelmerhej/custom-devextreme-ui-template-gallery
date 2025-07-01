@@ -1,5 +1,5 @@
 import { Task } from '../types/task';
-import { Contact } from '../types/crm-contact';
+import { ITotalProfit } from '@/types/totalProfit';
 
 export const PRIORITY_ITEMS = ['Low', 'Normal', 'High'];
 export const STATUS_ITEMS = ['Open', 'In Progress', 'Deferred', 'Completed'];
@@ -52,7 +52,7 @@ export const newTask: Task = {
   progress: 0,
 };
 
-export const newContact: Contact = {
+export const newContact: ITotalProfit = {
   id: 0,
   name: '',
   address: '',

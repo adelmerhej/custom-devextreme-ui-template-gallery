@@ -19,7 +19,7 @@ import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
-import { ContactStatus as ContactStatusType, Contact } from '../../types/crm-contact';
+import { ContactStatus as ContactStatusType, ITotalProfit } from '@/types/totalProfit';
 
 import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
@@ -84,14 +84,14 @@ const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
 
 export const JobStatusReport = () => {
-  const [gridDataSource, setGridDataSource] = useState<DataSource<Contact[], string>>();
+  const [gridDataSource, setGridDataSource] = useState<DataSource<ITotalProfit[], string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newContact });
   const gridRef = useRef<DataGridRef>(null);
 
-  let newContactData: Contact;
+  let newContactData: ITotalProfit;
 
   useEffect(() => {
     setGridDataSource(new DataSource({

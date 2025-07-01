@@ -9,7 +9,7 @@ interface State {
     stateShort: string;
 }
 
-export interface Contact {
+export interface ITotalProfit {
     id: number,
     name: string,
     status: ContactStatus,
