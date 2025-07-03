@@ -128,8 +128,9 @@ TotalProfitSchema.virtual('isDelayed').get(function() {
 
 // Virtual property to calculate profit margin
 TotalProfitSchema.virtual('totalProfitMargin').get(function() {
-  return ((this.TotalInvoices || 0) - (this.TotalCosts || 0));
+  return (this.TotalInvoices || 0) - (this.TotalCosts || 0);
 });
 
 export const TotalProfitModel: Model<ITotalProfit> =
-  mongoose.models.TotalProfit || mongoose.model<ITotalProfit>('TotalProfit', TotalProfitSchema);
+  mongoose.models.TotalProfit ||
+  mongoose.model<ITotalProfit>('TotalProfit', TotalProfitSchema);

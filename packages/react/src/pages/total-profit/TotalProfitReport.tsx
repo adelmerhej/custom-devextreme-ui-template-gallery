@@ -1,14 +1,20 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
 import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
 
-import { getContacts } from 'dx-template-gallery-data';
+// Importing data fetching function
+import { fetchTotalProfits } from '../../api/dx-xolog-data/admin/reports/total-profit/totalProfitApiClient';
+
+// Import auth context for token access
+import { useAuth } from '../../contexts/auth';
+
 import {
   DataGrid, DataGridRef,
   Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
   ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
-  DataGridTypes
+  DataGridTypes, Paging, Pager, Grouping, GroupPanel
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
@@ -34,8 +40,8 @@ const filterStatusList = ['All', ...CONTACT_STATUS_LIST];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
-    <div>{cell.data.name}</div>
-    <div className='position'>{cell.data.position}</div>
+    <div>{cell.data.CustomerName}</div>
+    <div className='position'>{cell.data.ConsigneeName}</div>
   </div>
 );
 
@@ -43,9 +49,14 @@ const editCellStatusRender = () => (
   <SelectBox className='cell-info' dataSource={CONTACT_STATUS_LIST} itemRender={ContactStatus} fieldRender={fieldRender} />
 );
 
-const cellPhoneRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
-  String(cell.data.phone).replace(/(\d{3})(\d{3})(\d{4})/, '+1($1)$2-$3')
+const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
+  <span>${cell.data.TotalProfit?.toFixed(2) || '0.00'}</span>
 );
+
+const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: string) => {
+  const date = cell.data[field];
+  return date ? new Date(date).toLocaleDateString() : '';
+};
 
 const fieldRender = (text: string) => (
   <>
@@ -84,6 +95,9 @@ const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
 
 export const TotalProfitReport = () => {
+  // Get auth context for token access (when auth system includes tokens)
+  const { user } = useAuth();
+
   const [gridDataSource, setGridDataSource] = useState<DataSource<ITotalProfit[], string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
@@ -93,12 +107,31 @@ export const TotalProfitReport = () => {
 
   let newContactData: ITotalProfit;
 
+  // Helper function to get auth token (placeholder for when auth system includes tokens)
+  const getAuthToken = useCallback(() => {
+    // When your auth system includes tokens, you would get it like:
+    // return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    // For now, return undefined since the current auth system doesn't use tokens
+    return undefined;
+  }, []);
+
+  // Helper function to load data with current parameters
+  const loadTotalProfitsData = useCallback(() => {
+    return fetchTotalProfits({
+      page: 1,
+      limit: 100,
+      // status: 'Active', // Optional: filter by status
+      // TotalProfit: 0, // Optional: minimum profit filter
+      token: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NjU1NWVmN2VhM2U1OWEzYzk3NGM5NSIsImlhdCI6MTc1MTQ3NjY2NCwiZXhwIjoxNzUxNTAxODY0fQ.ZemXLz8jjApseTHaFckPNfqufF967TClfmFArFFllJY'//getAuthToken() // Will be undefined until auth system includes tokens
+    });
+  }, [getAuthToken]);
+
   useEffect(() => {
     setGridDataSource(new DataSource({
-      key: 'id',
-      load: () => getContacts(),
+      key: '_id',
+      load: loadTotalProfitsData,
     }));
-  }, []);
+  }, [loadTotalProfitsData]);
 
   const changePopupVisibility = useCallback((isVisble) => {
     setPopupVisible(isVisble);
@@ -116,11 +149,18 @@ export const TotalProfitReport = () => {
   const syncDataOnClick = useCallback(() => {
     //setPopupVisible(true);
     setFormDataDefaults({ ...newContact });
+
+    // Refresh data with current parameters
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadTotalProfitsData,
+    }));
+
     gridRef.current?.instance().refresh();
-  }, []);
+  }, [loadTotalProfitsData]);
 
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
-    setContactId(data.id);
+    setContactId(data._id);
     setPanelOpened(true);
   }, []);
 
@@ -131,7 +171,7 @@ export const TotalProfitReport = () => {
     if (status === 'All') {
       gridRef.current?.instance().clearFilter();
     } else {
-      gridRef.current?.instance().filter(['status', '=', status]);
+      gridRef.current?.instance().filter(['StatusType', '=', status]);
     }
 
     setStatus(status);
@@ -147,7 +187,7 @@ export const TotalProfitReport = () => {
 
   const onSaveClick = useCallback(() => {
     notify({
-      message: `New contact "${newContactData.firstName} ${newContactData.lastName}" saved`,
+      message: `New record "${newContactData.JobNo} - ${newContactData.CustomerName}" saved`,
       position: { at: 'bottom center', my: 'bottom center' }
     },
     'success'
@@ -171,7 +211,17 @@ export const TotalProfitReport = () => {
           allowColumnReordering
           showBorders
           ref={gridRef}
+          pager={{
+            showPageSizeSelector: true,
+            allowedPageSizes: [20, 50, 100, 200],
+            showInfo: true,
+            visible: true,
+          }}
         >
+          <Grouping contextMenuEnabled />
+          <GroupPanel visible /> {/* or "auto" */}
+          <Paging defaultPageSize={100} />
+          <Pager visible showPageSizeSelector />
           <LoadPanel showPane={false} />
           <SearchPanel visible placeholder='Contact Search' />
           <ColumnChooser enabled />
@@ -231,40 +281,67 @@ export const TotalProfitReport = () => {
             <Item name='searchPanel' locateInMenu='auto' />
           </Toolbar>
           <Column
-            dataField='name'
-            caption='Name'
+            dataField='JobNo'
+            caption='Job#'
+            dataType='string'
             sortOrder='asc'
             hidingPriority={5}
+          />
+          <Column
+            dataField='JobDate'
+            caption='Job Date'
+            dataType='date'
+            hidingPriority={5}
+            minWidth={150}
+          />
+          <Column
+            dataField='CustomerName'
+            caption='Customer'
+            hidingPriority={5}
+            dataType='string'
             minWidth={150}
             cellRender={cellNameRender}
           />
           <Column
-            dataField='company'
-            caption='Company'
-            hidingPriority={5}
-            minWidth={150}
-          />
-          <Column
-            dataField='status'
-            caption='Status'
-            dataType='string'
+            dataField='Eta'
+            caption='ETA'
+            dataType='date'
             hidingPriority={3}
-            minWidth={100}
-            cellRender={ContactStatus}
-            editCellRender={editCellStatusRender}
           />
-          <Column dataField='assignedTo' caption='Assigned to' hidingPriority={4} />
           <Column
-            dataField='phone'
-            caption='Phone'
-            hidingPriority={2}
-            cellRender={cellPhoneRender}
+            dataField='Ata'
+            caption='ATA'
+            dataType='date'
+            hidingPriority={3}
           />
-          <Column dataField='email' caption='Email' hidingPriority={1} />
+          <Column
+            dataField='Arrival'
+            caption='Arrival'
+            dataType='date'
+            hidingPriority={3}
+          />
+          <Column
+            dataField='TotalProfit'
+            caption='Total Profit'
+            dataType='number'
+            hidingPriority={5}
+            cellRender={cellProfitRender}
+            format='currency'
+          />
+          <Column
+            dataField='StatusType'
+            caption='Status Type'
+            hidingPriority={1}
+          />
+          <Column
+            dataField='DepartmentName'
+            caption='Department Name'
+            hidingPriority={1}
+          />
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
         <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>
-          <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} />
+          {/* <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} /> */}
         </FormPopup>
       </div>
     </div>

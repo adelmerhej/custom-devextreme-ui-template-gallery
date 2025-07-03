@@ -73,7 +73,7 @@ export const CRMContactDetails = () => {
           <Item location='before'>
             <Button icon='arrowleft' stylingMode='text' />
           </Item>
-          <Item location='before' text={ data?.name ?? 'Loading...' } />
+          <Item location='before' text={ data?.ConsigneeName ?? 'Loading...' } />
           <Item location='after' locateInMenu='auto'>
             <Button
               text='Terminate'
@@ -136,7 +136,7 @@ export const CRMContactDetails = () => {
               messages={messages}
               tasks={data?.tasks}
               activities={data?.activities}
-              name={data?.name} />
+              name={data?.CustomerName} />
           </div>
         </div>
       </div>

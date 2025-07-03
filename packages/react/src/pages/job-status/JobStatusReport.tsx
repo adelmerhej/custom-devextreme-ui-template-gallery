@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
 import { saveAs } from 'file-saver-es';
@@ -262,7 +263,7 @@ export const JobStatusReport = () => {
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
         <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>
-          <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} />
+          {/* <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} /> */}
         </FormPopup>
       </div>
     </div>

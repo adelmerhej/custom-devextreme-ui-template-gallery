@@ -3,15 +3,47 @@ import { defaultUser } from '../utils/default-user';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export async function signIn(email: string, password: string) {
   try {
+
+    const response = await fetch('http://192.168.88.14:5055/api/v1/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed');
+    }
+
+    const token = data.token;
+
     // Send request
     return {
       isOk: true,
-      data: { ...defaultUser, email },
+      data: { ...defaultUser, email, token },
     };
   } catch {
     return {
       isOk: false,
       message: 'Authentication failed',
+    };
+  }
+}
+export async function signOut() {
+  try {
+    // Send request
+    return {
+      isOk: true,
+    };
+  } catch {
+    return {
+      isOk: false,
+      message: 'Failed to sign out',
     };
   }
 }

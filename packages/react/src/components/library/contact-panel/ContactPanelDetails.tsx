@@ -5,15 +5,12 @@ import { Button, ButtonTypes } from 'devextreme-react/button';
 import { ScrollView } from 'devextreme-react/scroll-view';
 import Toolbar, { Item as ToolbarItem } from 'devextreme-react/toolbar';
 import Form, {
-  Item as FormItem,
   GroupItem,
   ColCountByScreen,
 } from 'devextreme-react/form';
 import Accordion, { Item as AccordionItem } from 'devextreme-react/accordion';
 import { formatNumber } from 'devextreme/localization';
 import { ITotalProfit } from '@/types/totalProfit';
-import { CardActivities } from '../card-activities/CardActivities';
-import { FormTextbox, FormPhoto, ContactStatus } from '../..';
 import { useScreenSize } from '../../../utils/media-query';
 import ValidationGroup from 'devextreme-react/validation-group';
 
@@ -51,13 +48,6 @@ export const ContactPanelDetails = ({
 
   const navigate = useNavigate();
   const [formData, setFormData] = useState(contact);
-
-  const updateField = (field: string) => (value) => {
-    setFormData({
-      ...formData,
-      [field]: value,
-    });
-  };
 
   useEffect(() => {
     changePanelPinned();
@@ -106,10 +96,6 @@ export const ContactPanelDetails = ({
     });
   }, [contact]);
 
-  const renderCustomActivities = useCallback(() => {
-    return <CardActivities activities={contact.activities} />;
-  }, [contact]);
-
   return (
     <div
       id='contact-panel'
@@ -122,10 +108,7 @@ export const ContactPanelDetails = ({
       <div className='data-wrapper'>
         <Toolbar className='panel-toolbar'>
           <ToolbarItem location='before'>
-            <span className='contact-name value'>{contact.name}</span>
-          </ToolbarItem>
-          <ToolbarItem location='before'>
-            <ContactStatus text={contact.status} />
+            <span className='contact-name value'>{contact?.ConsigneeName}</span>
           </ToolbarItem>
           <ToolbarItem location='after' visible={isLarge || isMedium}>
             <Button
@@ -153,63 +136,6 @@ export const ContactPanelDetails = ({
               >
                 <GroupItem colCount={2} cssClass='photo-row'>
                   <ColCountByScreen xs={2} />
-                  <FormItem cssClass='photo-box'>
-                    <FormPhoto link={contact.image} size={124} />
-                  </FormItem>
-                  <GroupItem>
-                    <FormItem cssClass='accent'>
-                      <FormTextbox
-                        label='Company'
-                        value={formData.company}
-                        isEditing={!isEditing}
-                        onValueChange={updateField('company')}
-                      />
-                    </FormItem>
-                    <FormItem>
-                      <FormTextbox
-                        label='Position'
-                        value={formData.position}
-                        isEditing={!isEditing}
-                        onValueChange={updateField('position')}
-                      />
-                    </FormItem>
-                    <FormItem cssClass='accent'>
-                      <FormTextbox
-                        label='Assigned to'
-                        value={formData.manager}
-                        isEditing={!isEditing}
-                        onValueChange={updateField('manager')}
-                      />
-                    </FormItem>
-                  </GroupItem>
-                </GroupItem>
-
-                <GroupItem cssClass='contact-fields-group'>
-                  <FormItem>
-                    <FormTextbox
-                      value={formData.phone}
-                      isEditing={!isEditing}
-                      onValueChange={updateField('phone')}
-                      icon='tel'
-                      mask='+1(000)000-0000'
-                    />
-                  </FormItem>
-                  <FormItem>
-                    <FormTextbox
-                      value={formData.email}
-                      isEditing={!isEditing}
-                      onValueChange={updateField('email')}
-                      icon='email'
-                    />
-                  </FormItem>
-                  <FormItem>
-                    <FormTextbox
-                      value={formData.address}
-                      isEditing={!isEditing}
-                      onValueChange={updateField('address')}
-                      icon='home'
-                    />
-                  </FormItem>
                 </GroupItem>
               </Form>
             </div>
@@ -272,7 +198,6 @@ export const ContactPanelDetails = ({
               />
               <AccordionItem
                 title='Activities'
-                render={renderCustomActivities}
               />
             </Accordion>
           </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Task } from '../types/task';
 import { ITotalProfit } from '@/types/totalProfit';
 
@@ -30,9 +31,12 @@ export const ANALYTICS_PERIODS = {
 export const DEFAULT_ANALYTICS_PERIOD_KEY = 'All';
 
 export const CONTACT_STATUS_LIST = [
-  'Salaried',
-  'Commission',
-  'Terminated',
+  'On Water',
+  'To Be Loaded',
+  'Completed',
+  'Pending',
+  'In Progress',
+  'Cancelled',
 ];
 
 export const newTask: Task = {
@@ -52,25 +56,36 @@ export const newTask: Task = {
   progress: 0,
 };
 
-export const newContact: ITotalProfit = {
-  id: 0,
-  name: '',
-  address: '',
+export const newContact = {
+  JobNo: '',
+  JobDate: undefined,
+  CustomerName: '',
+  ConsigneeName: '',
+  DepartmentName: '',
+  StatusType: '',
+  TotalProfit: 0,
+  Eta: undefined,
+  Ata: undefined,
+  Arrival: undefined,
+  UserName: '',
+  Notes: '',
+  CountryOfDeparture: '',
+  Departure: '',
+  Destination: '',
+  ReferenceNo: '',
+  vessel: '',
+  TotalInvoices: 0,
+  TotalCosts: 0,
+  DepartmentId: '',
+  MemberOf: '',
+  JobType: '',
+  // Relationships
+  status: undefined as any,
+  state: undefined as any,
+  opportunities: undefined as any,
+  activities: [],
+  tasks: [],
+  image: '',
   firstName: '',
   lastName: '',
-  status: 'Salaried',
-  position: '',
-  manager: '',
-  company: '',
-  city: '',
-  state: {
-    stateShort: '',
-  },
-  zipCode: 0,
-  phone: '',
-  email: '',
-  image: '',
-  activities: [],
-  opportunities: [],
-  tasks: [],
-};
+} as Partial<ITotalProfit>;

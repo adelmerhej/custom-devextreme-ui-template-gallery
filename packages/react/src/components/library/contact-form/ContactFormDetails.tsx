@@ -6,8 +6,6 @@ import From, { Item as ItemForm, GroupItem, ColCountByScreen } from 'devextreme-
 import SelectBox from 'devextreme-react/select-box';
 import Button from 'devextreme-react/button';
 import TextBox from 'devextreme-react/text-box';
-import Validator, { PatternRule, EmailRule } from 'devextreme-react/validator';
-import NumberBox from 'devextreme-react/number-box';
 
 import { FormPhoto } from '../../utils/form-photo/FormPhoto';
 import { ContactStatus } from '../../utils/contact-status/ContactStatus';
@@ -81,55 +79,10 @@ export const ContactFromDetails = ({ data, editing, updateField }: {
             />
           </ItemForm>
         </GroupItem>
-
-        <ItemForm>
-          <FormTextbox
-            label='Position'
-            value={data.position}
-            isEditing={!editing}
-            onValueChange={updateField('position')}
-          />
-        </ItemForm>
-
-        <ItemForm cssClass='accent'>
-          <FormTextbox
-            label='Assigned to'
-            value={data.manager}
-            isEditing={!editing}
-            onValueChange={updateField('manager')}
-          />
-        </ItemForm>
-
-        <ItemForm cssClass='accent' colSpan={2}>
-          <FormTextbox
-            label='Company'
-            value={data.company}
-            isEditing={!editing}
-            onValueChange={updateField('company')}
-          />
-        </ItemForm>
       </GroupItem>
 
       <GroupItem colCount={4} caption='Contacts'>
         <ColCountByScreen xs={2} />
-        <ItemForm colSpan={4}>
-          <FormTextbox
-            label='Address'
-            value={data.address}
-            isEditing={!editing}
-            onValueChange={updateField('address')}
-          />
-        </ItemForm>
-
-        <ItemForm colSpan={2}>
-          <FormTextbox
-            label='City'
-            value={data.city}
-            isEditing={!editing}
-            onValueChange={updateField('city')}
-          />
-        </ItemForm>
-
         <ItemForm>
           <FormTextbox
             label='State'
@@ -138,37 +91,11 @@ export const ContactFromDetails = ({ data, editing, updateField }: {
             onValueChange={updateField('state')}
           />
         </ItemForm>
-
-        <ItemForm>
-          <NumberBox
-            label='Zip Code'
-            value={data.zipCode}
-            readOnly={!editing}
-            elementAttr={{ class: 'form-editor' }}
-            inputAttr={{ class: 'form-editor-input' }}
-            stylingMode='filled'
-            onValueChange={updateField('zipCode')}
-          >
-            <Validator>
-              <PatternRule
-                pattern={/^\d{5}$/}
-                message='Zip is invalid'
-              />
-            </Validator>
-          </NumberBox>
-        </ItemForm>
       </GroupItem>
 
       <GroupItem colCount={2} cssClass='contact-fields-group'>
         <ColCountByScreen xs={2} />
         <ItemForm>
-          <FormTextbox
-            label='Phone'
-            value={data.phone}
-            mask='+1(000)000-0000'
-            isEditing={!editing}
-            onValueChange={updateField('phone')}
-          />
           <Button
             className='form-item-button'
             visible={!editing}
@@ -180,14 +107,6 @@ export const ContactFromDetails = ({ data, editing, updateField }: {
         </ItemForm>
 
         <ItemForm>
-          <FormTextbox
-            label='Email'
-            value={data.email}
-            isEditing={!editing}
-            onValueChange={updateField('email')}
-          >
-            <EmailRule />
-          </FormTextbox>
           <Button
             className='form-item-button'
             visible={!editing}
