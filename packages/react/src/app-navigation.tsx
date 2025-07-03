@@ -6,7 +6,7 @@ export const navigation = [
     items: [
       {
         text: 'Total Profit',
-        path: '/crm-contact-list',
+        path: '/total-profit',
       },
       {
         text: 'Job Status',

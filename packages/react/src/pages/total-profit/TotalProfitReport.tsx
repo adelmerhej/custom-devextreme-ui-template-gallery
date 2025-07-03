@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
@@ -11,21 +12,40 @@ import { fetchTotalProfits } from '../../api/dx-xolog-data/admin/reports/total-p
 import { useAuth } from '../../contexts/auth';
 
 import {
-  DataGrid, DataGridRef,
-  Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
-  ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
-  DataGridTypes, Paging, Pager, Grouping, GroupPanel
+  DataGrid,
+  DataGridRef,
+  Sorting,
+  Selection,
+  HeaderFilter,
+  Scrolling,
+  SearchPanel,
+  ColumnChooser,
+  Export,
+  Column,
+  Toolbar,
+  Item,
+  LoadPanel,
+  DataGridTypes,
+  Paging,
+  Pager,
+  Grouping,
+  GroupPanel,
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
 import TextBox from 'devextreme-react/text-box';
 import Button from 'devextreme-react/button';
-import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-button';
+import DropDownButton, {
+  DropDownButtonTypes,
+} from 'devextreme-react/drop-down-button';
 
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
-import { ContactStatus as ContactStatusType, ITotalProfit } from '@/types/totalProfit';
+import {
+  ContactStatus as ContactStatusType,
+  ITotalProfit,
+} from '@/types/totalProfit';
 
 import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
@@ -46,14 +66,22 @@ const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
 );
 
 const editCellStatusRender = () => (
-  <SelectBox className='cell-info' dataSource={CONTACT_STATUS_LIST} itemRender={ContactStatus} fieldRender={fieldRender} />
+  <SelectBox
+    className='cell-info'
+    dataSource={CONTACT_STATUS_LIST}
+    itemRender={ContactStatus}
+    fieldRender={fieldRender}
+  />
 );
 
 const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <span>${cell.data.TotalProfit?.toFixed(2) || '0.00'}</span>
 );
 
-const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: string) => {
+const cellDateRender = (
+  cell: DataGridTypes.ColumnCellTemplateData,
+  field: string
+) => {
   const date = cell.data[field];
   return date ? new Date(date).toLocaleDateString() : '';
 };
@@ -84,7 +112,10 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'TotalProfit.xlsx');
+        saveAs(
+          new Blob([buffer], { type: 'application/octet-stream' }),
+          'TotalProfit.xlsx'
+        );
       });
     });
     e.cancel = true;
@@ -98,12 +129,16 @@ export const TotalProfitReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
-  const [gridDataSource, setGridDataSource] = useState<DataSource<ITotalProfit[], string>>();
+  const [gridDataSource, setGridDataSource] =
+    useState<DataSource<ITotalProfit[], string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newContact });
   const gridRef = useRef<DataGridRef>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   let newContactData: ITotalProfit;
 
@@ -122,15 +157,18 @@ export const TotalProfitReport = () => {
       limit: 100,
       // status: 'Active', // Optional: filter by status
       // TotalProfit: 0, // Optional: minimum profit filter
-      token: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NjU1NWVmN2VhM2U1OWEzYzk3NGM5NSIsImlhdCI6MTc1MTQ3NjY2NCwiZXhwIjoxNzUxNTAxODY0fQ.ZemXLz8jjApseTHaFckPNfqufF967TClfmFArFFllJY'//getAuthToken() // Will be undefined until auth system includes tokens
+      token:
+        'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NjU1NWVmN2VhM2U1OWEzYzk3NGM5NSIsImlhdCI6MTc1MTQ3NjY2NCwiZXhwIjoxNzUxNTAxODY0fQ.ZemXLz8jjApseTHaFckPNfqufF967TClfmFArFFllJY', //getAuthToken() // Will be undefined until auth system includes tokens
     });
   }, [getAuthToken]);
 
   useEffect(() => {
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadTotalProfitsData,
-    }));
+    setGridDataSource(
+      new DataSource({
+        key: '_id',
+        load: loadTotalProfitsData,
+      })
+    );
   }, [loadTotalProfitsData]);
 
   const changePopupVisibility = useCallback((isVisble) => {
@@ -146,19 +184,42 @@ export const TotalProfitReport = () => {
     gridRef.current?.instance().updateDimensions();
   }, []);
 
-  const syncDataOnClick = useCallback(() => {
-    //setPopupVisible(true);
-    setFormDataDefaults({ ...newContact });
+  // Function to update grid dimensions on window resize
+  // Function to sync data on button click
+  const syncDataOnClick = useCallback(async() => {
+    setError(null);
 
-    // Refresh data with current parameters
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadTotalProfitsData,
-    }));
+    try {
+      console.log('Syncing...', new Date().toLocaleTimeString());
 
-    gridRef.current?.instance().refresh();
+      const response = await fetch('/api/sync/reports/all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      //setPopupVisible(true);
+
+      // Refresh data with current parameters
+      setGridDataSource(
+        new DataSource({
+          key: '_id',
+          load: loadTotalProfitsData,
+        })
+      );
+
+      gridRef.current?.instance().refresh();
+    } catch (err: unknown) {
+      console.log('This error: ', err);
+      setError(
+        err instanceof Error ? err.message : 'An unexpected error occurred'
+      );
+    } finally {
+      setIsSyncing(false);
+    }
   }, [loadTotalProfitsData]);
 
+  // Function to handle row click
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
     setContactId(data._id);
     setPanelOpened(true);
@@ -166,17 +227,22 @@ export const TotalProfitReport = () => {
 
   const [status, setStatus] = useState(filterStatusList[0]);
 
-  const filterByStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: status }: { item: FilterContactStatus } = e;
-    if (status === 'All') {
-      gridRef.current?.instance().clearFilter();
-    } else {
-      gridRef.current?.instance().filter(['StatusType', '=', status]);
-    }
+  const filterByStatus = useCallback(
+    (e: DropDownButtonTypes.SelectionChangedEvent) => {
+      const { item: status }: { item: FilterContactStatus } = e;
+      if (status === 'All') {
+        gridRef.current?.instance().clearFilter();
+      } else {
+        gridRef.current?.instance().filter(['StatusType', '=', status]);
+      }
 
-    setStatus(status);
-  }, []);
+      setStatus(status);
+    },
+    []
+  );
 
+  // Function to update grid dimensions on window resize
+  // Function to refresh the grid
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
   }, []);
@@ -186,11 +252,12 @@ export const TotalProfitReport = () => {
   }, []);
 
   const onSaveClick = useCallback(() => {
-    notify({
-      message: `New record "${newContactData.JobNo} - ${newContactData.CustomerName}" saved`,
-      position: { at: 'bottom center', my: 'bottom center' }
-    },
-    'success'
+    notify(
+      {
+        message: `New record "${newContactData.JobNo} - ${newContactData.CustomerName}" saved`,
+        position: { at: 'bottom center', my: 'bottom center' },
+      },
+      'success'
     );
 
     setFormDataDefaults({ ...formDataDefaults });
@@ -339,8 +406,18 @@ export const TotalProfitReport = () => {
             hidingPriority={1}
           />
         </DataGrid>
-        <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
-        <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>
+        <ContactPanel
+          contactId={contactId}
+          isOpened={isPanelOpened}
+          changePanelOpened={changePanelOpened}
+          changePanelPinned={changePanelPinned}
+        />
+        <FormPopup
+          title='New Contact'
+          visible={popupVisible}
+          setVisible={changePopupVisibility}
+          onSave={onSaveClick}
+        >
           {/* <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} /> */}
         </FormPopup>
       </div>
