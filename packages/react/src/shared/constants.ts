@@ -33,10 +33,13 @@ export const DEFAULT_ANALYTICS_PERIOD_KEY = 'All';
 export const CONTACT_STATUS_LIST = [
   'On Water',
   'To Be Loaded',
-  'Completed',
-  'Pending',
-  'In Progress',
-  'Cancelled',
+  'Under Clearance',
+];
+
+export const JOB_STATUS_LIST = [
+  'On Water',
+  'To Be Loaded',
+  'Under Clearance',
 ];
 
 export const newTask: Task = {

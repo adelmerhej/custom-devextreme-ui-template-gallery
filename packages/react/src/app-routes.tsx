@@ -13,7 +13,7 @@ import {
   TotalProfitReport,
   EmptyContainersReport,
   ClientInvoicesReport,
-  OnGoingJobsReport
+  OngoingJobsReport
 } from './pages';
 import { withNavigationWatcher } from './contexts/navigation';
 
@@ -36,7 +36,7 @@ const routes = [
   },
   {
     path: '/ongoing-jobs',
-    element: OnGoingJobsReport,
+    element: OngoingJobsReport,
   },
   {
     path: '/planning-task-list',

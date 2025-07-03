@@ -16,13 +16,13 @@ const getData = async(queryString?: string, token?: string) => {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${baseUrl}/total-profits${queryString ? `?${queryString}` : ''}`, {
+    const response = await fetch(`${baseUrl}/empty-containers${queryString ? `?${queryString}` : ''}`, {
       method: 'GET',
       headers: headers,
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch total profits');
+      throw new Error('Failed to fetch Empty Containers');
     }
 
     const data = await response.json();
@@ -33,8 +33,8 @@ const getData = async(queryString?: string, token?: string) => {
 
 };
 
-// Client-side function to fetch total profits (for React components)
-export async function fetchTotalProfits(params: {
+// Client-side function to fetch Empty Containers (for React components)
+export async function fetchEmptyContainers(params: {
   page?: number;
   limit?: number;
   status?: string;
@@ -51,9 +51,9 @@ export async function fetchTotalProfits(params: {
     // Get the query string
     const queryString = queryParams.toString();
 
-    console.log('Fetching from:', `${baseUrl}/total-profits${queryString ? `?${queryString}` : ''}`);
+    console.log('Fetching from:', `${baseUrl}/empty-containers${queryString ? `?${queryString}` : ''}`);
 
-    // Use the getData function to fetch all total profits from MongoDB
+    // Use the getData function to fetch all Empty Containers from MongoDB
     const signInResult = await signIn('admin@xolog.com', 'Admin@Xolog#16');
     let token: string | undefined = undefined;
     if (signInResult && signInResult.isOk && signInResult.data && signInResult.data.token) {
@@ -70,18 +70,17 @@ export async function fetchTotalProfits(params: {
     return data?.data || data || [];
 
   } catch (error: unknown) {
-    console.error('Error fetching total profits:', error);
+    console.error('Error fetching Empty Containers:', error);
 
     throw error;
   }
 }
 
 // Alternative function with different parameters format
-export async function getTotalProfitsData(options: {
+export async function getEmptyContainersData(options: {
   page?: number;
   limit?: number;
   status?: string;
-  minProfit?: number;
   token?: string;
 } = {}) {
   const defaultOptions = {
@@ -90,7 +89,7 @@ export async function getTotalProfitsData(options: {
     ...options
   };
 
-  return fetchTotalProfits({
+  return fetchEmptyContainers({
     page: defaultOptions.page,
     limit: defaultOptions.limit,
     status: defaultOptions.status,

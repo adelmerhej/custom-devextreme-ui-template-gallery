@@ -3,7 +3,7 @@ export { TotalProfitReport } from './total-profit/TotalProfitReport';
 export { JobStatusReport } from './job-status/JobStatusReport';
 export { ClientInvoicesReport } from './client-invoices/ClientInvoicesReport';
 export { EmptyContainersReport } from './empty-containers/EmptyContainersReport';
-export { OnGoingJobsReport } from './ongoing-jobs/OnGoingJobsReport';
+export { OngoingJobsReport } from './ongoing-jobs/OnGoingJobsReport';
 
 export { CRMContactDetails } from './crm-contact-details/crm-contact-details';
 export { PlanningTaskList } from './planning-task-list/planning-task-list';
