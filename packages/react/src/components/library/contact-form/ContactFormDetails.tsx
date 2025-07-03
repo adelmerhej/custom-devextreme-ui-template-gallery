@@ -12,7 +12,7 @@ import { ContactStatus } from '../../utils/contact-status/ContactStatus';
 import { FormTextbox } from '../../utils/form-textbox/FormTextbox';
 
 import { ITotalProfit } from '@/types/totalProfit';
-import { CONTACT_STATUS_LIST } from '../../../shared/constants';
+import { JOB_STATUS } from '../../../shared/constants';
 
 const PHOTO_SIZE = 184;
 
@@ -53,7 +53,7 @@ export const ContactFromDetails = ({ data, editing, updateField }: {
               width='100%'
               value={data.status}
               readOnly={!editing}
-              items={CONTACT_STATUS_LIST}
+              items={JOB_STATUS}
               stylingMode={stylingMode}
               fieldRender={statusRender}
               itemRender={statusItemRender}

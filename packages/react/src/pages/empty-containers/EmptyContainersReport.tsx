@@ -30,13 +30,13 @@ import { ContactStatus as ContactStatusType, IEmptyContainer } from '@/types/emp
 import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
 
-import { CONTACT_STATUS_LIST, newContact } from '../../shared/constants';
+import { JOB_STATUS, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
 type FilterContactStatus = ContactStatusType | 'All';
 
-const filterStatusList = ['All', ...CONTACT_STATUS_LIST];
+const filterStatusList = ['All', ...JOB_STATUS];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
@@ -46,7 +46,7 @@ const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
 );
 
 const editCellStatusRender = () => (
-  <SelectBox className='cell-info' dataSource={CONTACT_STATUS_LIST} itemRender={ContactStatus} fieldRender={fieldRender} />
+  <SelectBox className='cell-info' dataSource={JOB_STATUS} itemRender={ContactStatus} fieldRender={fieldRender} />
 );
 
 const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
@@ -102,7 +102,7 @@ export const EmptyContainersReport = () => {
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
-  const [formDataDefaults, setFormDataDefaults] = useState({ ...newContact });
+  const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
   const gridRef = useRef<DataGridRef>(null);
 
   let newContactData: IEmptyContainer;
@@ -148,7 +148,7 @@ export const EmptyContainersReport = () => {
 
   const syncDataOnClick = useCallback(() => {
     //setPopupVisible(true);
-    setFormDataDefaults({ ...newContact });
+    setFormDataDefaults({ ...newJob });
 
     // Refresh data with current parameters
     setGridDataSource(new DataSource({

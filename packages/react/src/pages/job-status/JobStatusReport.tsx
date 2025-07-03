@@ -25,18 +25,26 @@ import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
-import { ContactStatus as ContactStatusType, ITotalProfit } from '@/types/totalProfit';
+import { JobStatusPayment as JobStatusPaymentType,
+  IJobStatus, JobStatus, JobStatusList, JobStatusDepartments } from '@/types/jobStatus';
 
 import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
 
-import { CONTACT_STATUS_LIST, newContact } from '../../shared/constants';
+import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
-type FilterContactStatus = ContactStatusType | 'All';
+type FilterJobStatusType = JobStatus | 'All';
+type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
+type FilterJobStatusListType = JobStatusList | 'All';
+type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
+type FilterJobStatusDepartments = JobStatusDepartments | 'All';
 
-const filterStatusList = ['All', ...CONTACT_STATUS_LIST];
+const filterJobStatus = ['All', ...JOB_STATUS];
+const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
+const filterStatusList = ['All', ...JOB_STATUS_LIST];
+const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
@@ -46,7 +54,7 @@ const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
 );
 
 const editCellStatusRender = () => (
-  <SelectBox className='cell-info' dataSource={CONTACT_STATUS_LIST} itemRender={ContactStatus} fieldRender={fieldRender} />
+  <SelectBox className='cell-info' dataSource={JOB_STATUS} itemRender={ContactStatus} fieldRender={fieldRender} />
 );
 
 const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
@@ -65,6 +73,31 @@ const fieldRender = (text: string) => (
   </>
 );
 
+const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: number[], specialCondition?: { id: number, jobType: number } } => {
+  switch (department) {
+    case 'All':
+      return { ids: [0] };
+    case 'Air Export':
+      return { ids: [2] };
+    case 'Air Import':
+      return { ids: [5] };
+    case 'Land Freight':
+      return { ids: [6] };
+    case 'Air Clearance':
+      return { ids: [8] };
+    case 'Sea Import':
+      return { ids: [16] };
+    case 'Sea Clearance':
+      return { ids: [17] };
+    case 'Sea Export':
+      return { ids: [18] };
+    case 'Sea Cross':
+      return { ids: [16], specialCondition: { id: 16, jobType: 3 } };
+    default:
+      return { ids: [0] };
+  }
+};
+
 const onExporting = (e: DataGridTypes.ExportingEvent) => {
   if (e.format === 'pdf') {
     const doc = new JsPdf();
@@ -72,11 +105,11 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       jsPDFDocument: doc,
       component: e.component,
     }).then(() => {
-      doc.save('TotalProfit.pdf');
+      doc.save('JobStatusReport.pdf');
     });
   } else {
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('TotalProfit');
+    const worksheet = workbook.addWorksheet('JobStatusReport');
 
     exportDataGridToXLSX({
       component: e.component,
@@ -84,7 +117,7 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'TotalProfit.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'JobStatusReport.xlsx');
       });
     });
     e.cancel = true;
@@ -98,14 +131,14 @@ export const JobStatusReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
-  const [gridDataSource, setGridDataSource] = useState<DataSource<ITotalProfit[], string>>();
+  const [gridDataSource, setGridDataSource] = useState<DataSource<IJobStatus[], string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
-  const [formDataDefaults, setFormDataDefaults] = useState({ ...newContact });
+  const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
   const gridRef = useRef<DataGridRef>(null);
 
-  let newContactData: ITotalProfit;
+  let newContactData: IJobStatus;
 
   // Helper function to get auth token (placeholder for when auth system includes tokens)
   const getAuthToken = useCallback(() => {
@@ -133,6 +166,13 @@ export const JobStatusReport = () => {
     }));
   }, [loadJobStatusesData]);
 
+  // Apply default filter for 'New' status on component mount
+  useEffect(() => {
+    if (gridRef.current?.instance()) {
+      gridRef.current.instance().filter(['StatusType', '=', 'New']);
+    }
+  }, [gridDataSource]);
+
   const changePopupVisibility = useCallback((isVisble) => {
     setPopupVisible(isVisble);
   }, []);
@@ -148,7 +188,7 @@ export const JobStatusReport = () => {
 
   const syncDataOnClick = useCallback(() => {
     //setPopupVisible(true);
-    setFormDataDefaults({ ...newContact });
+    setFormDataDefaults({ ...newJob });
 
     // Refresh data with current parameters
     setGridDataSource(new DataSource({
@@ -164,17 +204,64 @@ export const JobStatusReport = () => {
     setPanelOpened(true);
   }, []);
 
-  const [status, setStatus] = useState(filterStatusList[0]);
+  const [departement, setDepartements] = useState(filterDepartmentList[0]);
+  const [jobStatusList, setJobStatusList] = useState('New');
+  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
 
-  const filterByStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: status }: { item: FilterContactStatus } = e;
-    if (status === 'All') {
+  const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
+    const departmentResult = getDepartmentId(departement);
+
+    if (departement === 'All') {
       gridRef.current?.instance().clearFilter();
     } else {
-      gridRef.current?.instance().filter(['StatusType', '=', status]);
+    // Check if we have a special condition for Sea Cross (DepartmentId = 16 and JobType = 3)
+      if (departmentResult.specialCondition &&
+        departmentResult.specialCondition.id === 16 &&
+        departmentResult.specialCondition.jobType === 3) {
+      // Apply combined filter: DepartmentId = 16 AND JobType = 3
+        gridRef.current?.instance().filter([
+          ['DepartmentId', '=', 16],
+          'and',
+          ['JobType', '=', 3]
+        ]);
+      } else {
+      // Apply regular department filter
+        gridRef.current?.instance().filter(['DepartmentId', '=', departmentResult.ids[0]]);
+      }
     }
 
-    setStatus(status);
+    setDepartements(departement);
+  }, []);
+
+  const filterByJobStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: jobStatusList }: { item: FilterJobStatusListType } = e;
+
+    if (jobStatusList === 'All') {
+      gridRef.current?.instance().clearFilter();
+    } else {
+      gridRef.current?.instance().filter(['StatusType', '=', jobStatusList]);
+    }
+
+    setJobStatusList(jobStatusList);
+  }, []);
+
+  const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
+
+    if (paymentStatus === 'All') {
+      gridRef.current?.instance().clearFilter();
+    } else {
+      if (paymentStatus === 'Full Paid') {
+        // Apply filter for Full Paid jobs
+        gridRef.current?.instance().filter(['FullPaid', '=', true]);
+      } else if (paymentStatus === 'Not Paid') {
+        // Apply filter for Not Paid jobs
+        gridRef.current?.instance().filter(['FullPaid', '=', false]);
+      }
+    }
+
+    setPaymentStatus(paymentStatus);
   }, []);
 
   const refresh = useCallback(() => {
@@ -213,7 +300,7 @@ export const JobStatusReport = () => {
           ref={gridRef}
           pager={{
             showPageSizeSelector: true,
-            allowedPageSizes: [20, 50, 100, 200],
+            allowedPageSizes: [100, 200, 1000, 0],
             showInfo: true,
             visible: true,
           }}
@@ -240,12 +327,32 @@ export const JobStatusReport = () => {
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
-                items={filterStatusList}
+                items={filterDepartmentList}
                 stylingMode='text'
-                text={status}
+                text={departement}
                 dropDownOptions={dropDownOptions}
                 useSelectMode
-                onSelectionChanged={filterByStatus}
+                onSelectionChanged={filterByJobDepartment}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterStatusList}
+                stylingMode='text'
+                text={jobStatusList}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobStatusList}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterPaymentList}
+                stylingMode='text'
+                text={paymentStatus}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobPaymentStatus}
               />
             </Item>
             <Item location='after' locateInMenu='auto'>

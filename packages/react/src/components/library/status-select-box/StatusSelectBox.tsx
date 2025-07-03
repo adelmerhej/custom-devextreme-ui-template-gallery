@@ -4,7 +4,7 @@ import SelectBox from 'devextreme-react/select-box';
 import TextBox from 'devextreme-react/text-box';
 import type { EditorStyle, LabelMode } from 'devextreme-react/common';
 import { ContactStatus } from '../../utils/contact-status/ContactStatus';
-import { CONTACT_STATUS_LIST } from '../../../shared/constants';
+import { JOB_STATUS } from '../../../shared/constants';
 
 interface StatusSelectBoxProps {
   value: string,
@@ -47,7 +47,7 @@ export const StatusSelectBox = ({
   return <SelectBox
     label='Status'
     value={value}
-    items={CONTACT_STATUS_LIST}
+    items={JOB_STATUS}
     onValueChange={onValueChange}
     itemRender={ItemRender}
     readOnly={readOnly}

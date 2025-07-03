@@ -1,9 +1,9 @@
 import { Activities } from './card-activities';
 import { Task } from './task';
 import { Opportunities } from './card-opportunities';
-import { CONTACT_STATUS_LIST } from '../shared/constants';
+import { JOB_STATUS } from '../shared/constants';
 
-export type ContactStatus = (typeof CONTACT_STATUS_LIST)[number];
+export type JobStatus = (typeof JOB_STATUS)[number];
 
 interface State {
     stateShort: string;
@@ -34,7 +34,7 @@ export interface ITotalProfit extends Document {
   MemberOf: string;
   JobType: string;
   // Relationships
-  status: ContactStatus,
+  status: JobStatus,
   state: State,
   opportunities: Opportunities,
   activities: Activities[];

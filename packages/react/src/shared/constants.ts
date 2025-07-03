@@ -30,16 +30,32 @@ export const ANALYTICS_PERIODS = {
 
 export const DEFAULT_ANALYTICS_PERIOD_KEY = 'All';
 
-export const CONTACT_STATUS_LIST = [
+export const JOB_STATUS = [
   'On Water',
   'To Be Loaded',
   'Under Clearance',
 ];
 
+export const JOB_STATUS_PAYMENT = [
+  'Full Paid',
+  'Not Paid',
+];
+
 export const JOB_STATUS_LIST = [
-  'On Water',
-  'To Be Loaded',
-  'Under Clearance',
+  'New',
+  'Delivered',
+  'Cancelled',
+];
+
+export const JOB_STATUS_DEPARTMENTS = [
+  'Sea Import',
+  'Sea Export',
+  'Air Import',
+  'Air Export',
+  'Sea Clearance',
+  'Air Clearance',
+  'Land Freight',
+  'Sea Cross',
 ];
 
 export const newTask: Task = {
@@ -59,7 +75,7 @@ export const newTask: Task = {
   progress: 0,
 };
 
-export const newContact = {
+export const newJob = {
   JobNo: '',
   JobDate: undefined,
   CustomerName: '',
