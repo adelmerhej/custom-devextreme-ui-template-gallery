@@ -14,7 +14,7 @@ import {
   DataGrid, DataGridRef,
   Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
   ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
-  DataGridTypes, Paging, Pager, Grouping, GroupPanel
+  DataGridTypes, Paging, Pager, Grouping, GroupPanel, FilterRow
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
@@ -136,6 +136,12 @@ export const JobStatusReport = () => {
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
+  const [departement, setDepartements] = useState(filterDepartmentList[0]);
+  const [jobStatusList, setJobStatusList] = useState('New');
+  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+  const [statusListFilter, setStatusListFilter] = useState<string>('New');
   const gridRef = useRef<DataGridRef>(null);
 
   let newContactData: IJobStatus;
@@ -150,14 +156,47 @@ export const JobStatusReport = () => {
 
   // Helper function to load data with current parameters
   const loadJobStatusesData = useCallback(() => {
-    return fetchJobStatuses({
+    const params: {
+      page: number;
+      limit: number;
+      fullPaid?: string;
+      statusType?: string;
+      departmentId?: number;
+      jobType?: number;
+    } = {
       page: 1,
       limit: 100,
-      // status: 'Active', // Optional: filter by status
-      // TotalProfit: 0, // Optional: minimum profit filter
-      token: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NjU1NWVmN2VhM2U1OWEzYzk3NGM5NSIsImlhdCI6MTc1MTQ3NjY2NCwiZXhwIjoxNzUxNTAxODY0fQ.ZemXLz8jjApseTHaFckPNfqufF967TClfmFArFFllJY'//getAuthToken() // Will be undefined until auth system includes tokens
-    });
-  }, [getAuthToken]);
+    };
+
+    // Add payment status filter if set
+    if (paymentStatusFilter) {
+      if (paymentStatusFilter === 'Full Paid') {
+        params.fullPaid = 'true';
+      } else if (paymentStatusFilter === 'Not Paid') {
+        params.fullPaid = 'false';
+      }else {
+        params.fullPaid = undefined;
+      }
+    }
+
+    // Add status list filter if set
+    if (statusListFilter && statusListFilter !== 'All') {
+      params.statusType = statusListFilter;
+    }
+
+    // Add department filter if set
+    if (departmentFilter && departmentFilter !== 'All') {
+      const departmentResult = getDepartmentId(departmentFilter as FilterJobStatusDepartmentType);
+      if (departmentResult.ids[0] !== 0) {
+        params.departmentId = departmentResult.ids[0];
+        if (departmentResult.specialCondition) {
+          params.jobType = departmentResult.specialCondition.jobType;
+        }
+      }
+    }
+
+    return fetchJobStatuses(params);
+  }, [paymentStatusFilter, statusListFilter, departmentFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
@@ -165,13 +204,6 @@ export const JobStatusReport = () => {
       load: loadJobStatusesData,
     }));
   }, [loadJobStatusesData]);
-
-  // Apply default filter for 'New' status on component mount
-  useEffect(() => {
-    if (gridRef.current?.instance()) {
-      gridRef.current.instance().filter(['StatusType', '=', 'New']);
-    }
-  }, [gridDataSource]);
 
   const changePopupVisibility = useCallback((isVisble) => {
     setPopupVisible(isVisble);
@@ -204,65 +236,59 @@ export const JobStatusReport = () => {
     setPanelOpened(true);
   }, []);
 
-  const [departement, setDepartements] = useState(filterDepartmentList[0]);
-  const [jobStatusList, setJobStatusList] = useState('New');
-  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
-
   const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
-    const departmentResult = getDepartmentId(departement);
 
     if (departement === 'All') {
-      gridRef.current?.instance().clearFilter();
+      setDepartmentFilter(null);
     } else {
-    // Check if we have a special condition for Sea Cross (DepartmentId = 16 and JobType = 3)
-      if (departmentResult.specialCondition &&
-        departmentResult.specialCondition.id === 16 &&
-        departmentResult.specialCondition.jobType === 3) {
-      // Apply combined filter: DepartmentId = 16 AND JobType = 3
-        gridRef.current?.instance().filter([
-          ['DepartmentId', '=', 16],
-          'and',
-          ['JobType', '=', 3]
-        ]);
-      } else {
-      // Apply regular department filter
-        gridRef.current?.instance().filter(['DepartmentId', '=', departmentResult.ids[0]]);
-      }
+      setDepartmentFilter(departement);
     }
 
     setDepartements(departement);
-  }, []);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
 
   const filterByJobStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: jobStatusList }: { item: FilterJobStatusListType } = e;
 
     if (jobStatusList === 'All') {
-      gridRef.current?.instance().clearFilter();
+      setStatusListFilter('All');
     } else {
-      gridRef.current?.instance().filter(['StatusType', '=', jobStatusList]);
+      setStatusListFilter(jobStatusList);
     }
 
     setJobStatusList(jobStatusList);
-  }, []);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
 
   const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
 
     if (paymentStatus === 'All') {
-      gridRef.current?.instance().clearFilter();
+      setPaymentStatusFilter(null);
     } else {
-      if (paymentStatus === 'Full Paid') {
-        // Apply filter for Full Paid jobs
-        gridRef.current?.instance().filter(['FullPaid', '=', true]);
-      } else if (paymentStatus === 'Not Paid') {
-        // Apply filter for Not Paid jobs
-        gridRef.current?.instance().filter(['FullPaid', '=', false]);
-      }
+      setPaymentStatusFilter(paymentStatus);
     }
 
     setPaymentStatus(paymentStatus);
-  }, []);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
 
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
@@ -298,6 +324,7 @@ export const JobStatusReport = () => {
           allowColumnReordering
           showBorders
           ref={gridRef}
+          filterRow={{ visible: true, applyFilter: 'auto' }}
           pager={{
             showPageSizeSelector: true,
             allowedPageSizes: [100, 200, 1000, 0],

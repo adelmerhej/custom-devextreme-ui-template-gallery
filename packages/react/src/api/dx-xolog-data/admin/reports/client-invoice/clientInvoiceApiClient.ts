@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import { signIn } from '../../../../auth';
 
-const baseUrl = 'http://192.168.88.14:5055/api/v1/admin/reports';
+const baseUrl = `${process.env.REACT_APP_API_URL}/api/v1/admin/reports`;
 
 const getData = async(queryString?: string, token?: string) => {
 
@@ -26,7 +26,6 @@ const getData = async(queryString?: string, token?: string) => {
     }
 
     const data = await response.json();
-    console.log('Fetched data:', data);
     return data;
 
   } catch (error) { /* empty */ }
@@ -51,8 +50,6 @@ export async function fetchClientInvoices(params: {
     // Get the query string
     const queryString = queryParams.toString();
 
-    console.log('Fetching from:', `${baseUrl}/client-invoices${queryString ? `?${queryString}` : ''}`);
-
     // Use the getData function to fetch all Client Invoices from MongoDB
     const signInResult = await signIn('admin@xolog.com', 'Admin@Xolog#16');
     let token: string | undefined = undefined;
@@ -63,8 +60,6 @@ export async function fetchClientInvoices(params: {
     params.token = token;
 
     const data = await getData(queryString, params.token);
-
-    console.log('API Response:', data);
 
     // Return the data directly - assuming the API returns the expected format
     return data?.data || data || [];

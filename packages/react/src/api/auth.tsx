@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { defaultUser } from '../utils/default-user';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export async function signIn(email: string, password: string) {
   try {
 

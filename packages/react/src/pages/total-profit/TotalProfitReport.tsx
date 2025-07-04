@@ -278,9 +278,10 @@ export const TotalProfitReport = () => {
           allowColumnReordering
           showBorders
           ref={gridRef}
+          filterRow={{ visible: true, applyFilter: 'auto' }}
           pager={{
             showPageSizeSelector: true,
-            allowedPageSizes: [20, 50, 100, 200],
+            allowedPageSizes: [100, 200, 1000, 0],
             showInfo: true,
             visible: true,
           }}
