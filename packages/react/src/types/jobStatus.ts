@@ -7,7 +7,7 @@ export type JobStatus = (typeof JOB_STATUS)[number];
 
 export type JobStatusPayment = (typeof JOB_STATUS_PAYMENT)[number];
 
-export type JobStatusList = (typeof JOB_STATUS_LIST)[number];
+export type StatusList = (typeof JOB_STATUS_LIST)[number];
 
 export type JobStatusDepartments = (typeof JOB_STATUS_DEPARTMENTS)[number];
 

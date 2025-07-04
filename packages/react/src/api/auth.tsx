@@ -5,7 +5,7 @@ import { defaultUser } from '../utils/default-user';
 export async function signIn(email: string, password: string) {
   try {
 
-    const response = await fetch('http://192.168.88.14:5055/api/v1/auth/login', {
+    const response = await fetch('http://myaccount.xolog.com:5055/api/v1/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

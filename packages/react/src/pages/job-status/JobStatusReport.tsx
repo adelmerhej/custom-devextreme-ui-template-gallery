@@ -26,7 +26,7 @@ import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
 import { JobStatusPayment as JobStatusPaymentType,
-  IJobStatus, JobStatus, JobStatusList, JobStatusDepartments } from '@/types/jobStatus';
+  IJobStatus, JobStatus, StatusList, JobStatusDepartments } from '@/types/jobStatus';
 
 import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
@@ -36,10 +36,9 @@ import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
 type FilterJobStatusType = JobStatus | 'All';
-type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
-type FilterJobStatusListType = JobStatusList | 'All';
 type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
-type FilterJobStatusDepartments = JobStatusDepartments | 'All';
+type FilterStatusListType = StatusList | 'All';
+type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
 const filterJobStatus = ['All', ...JOB_STATUS];
 const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
@@ -136,12 +135,19 @@ export const JobStatusReport = () => {
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
+
+  const [jobStatus, setJobStatus] = useState(filterJobStatus[0]);
+  const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
+
   const [departement, setDepartements] = useState(filterDepartmentList[0]);
-  const [jobStatusList, setJobStatusList] = useState('New');
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+
+  const [statusList, setStatusList] = useState(filterStatusList[0]);
+  const [statusListFilter, setStatusListFilter] = useState<string>('New');
+
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
-  const [statusListFilter, setStatusListFilter] = useState<string>('New');
+
   const gridRef = useRef<DataGridRef>(null);
 
   let newContactData: IJobStatus;
@@ -236,6 +242,24 @@ export const JobStatusReport = () => {
     setPanelOpened(true);
   }, []);
 
+  const filterByJobStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: jobStatusParam }: { item: FilterJobStatusType } = e;
+
+    if (jobStatusParam === 'All') {
+      setJobStatusFilter(null);
+    } else {
+      setJobStatusFilter(jobStatusParam);
+    }
+
+    setJobStatus(jobStatusParam);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
+
   const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
 
@@ -254,16 +278,16 @@ export const JobStatusReport = () => {
     }));
   }, [loadJobStatusesData]);
 
-  const filterByJobStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: jobStatusList }: { item: FilterJobStatusListType } = e;
+  const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: statusList }: { item: FilterStatusListType } = e;
 
-    if (jobStatusList === 'All') {
+    if (statusList === 'All') {
       setStatusListFilter('All');
     } else {
-      setStatusListFilter(jobStatusList);
+      setStatusListFilter(statusList);
     }
 
-    setJobStatusList(jobStatusList);
+    setStatusList(statusList);
 
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
@@ -364,12 +388,22 @@ export const JobStatusReport = () => {
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
-                items={filterStatusList}
+                items={filterJobStatus}
                 stylingMode='text'
-                text={jobStatusList}
+                text={jobStatus}
                 dropDownOptions={dropDownOptions}
                 useSelectMode
-                onSelectionChanged={filterByJobStatusList}
+                onSelectionChanged={filterByJobStatus}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterStatusList}
+                stylingMode='text'
+                text={statusList}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByStatusList}
               />
             </Item>
             <Item location='before' locateInMenu='auto'>
