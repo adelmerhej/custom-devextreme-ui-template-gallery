@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { defaultUser } from '../utils/default-user';
+import process from 'process';
 
 export async function signIn(email: string, password: string) {
   try {
-
-    const response = await fetch('http://myaccount.xolog.com:5055/api/v1/auth/login', {
+    const baseUrl = `${process.env.REACT_APP_API_URL}`;
+    const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

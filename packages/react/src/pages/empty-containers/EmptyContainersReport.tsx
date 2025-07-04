@@ -122,7 +122,6 @@ export const EmptyContainersReport = () => {
       limit: 100,
       // status: 'Active', // Optional: filter by status
       // TotalProfit: 0, // Optional: minimum profit filter
-      token: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NjU1NWVmN2VhM2U1OWEzYzk3NGM5NSIsImlhdCI6MTc1MTQ3NjY2NCwiZXhwIjoxNzUxNTAxODY0fQ.ZemXLz8jjApseTHaFckPNfqufF967TClfmFArFFllJY'//getAuthToken() // Will be undefined until auth system includes tokens
     });
   }, [getAuthToken]);
 
