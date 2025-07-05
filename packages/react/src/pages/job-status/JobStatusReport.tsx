@@ -44,7 +44,7 @@ type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
 type FilterStatusListType = StatusList | 'All';
 type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
-const filterJobStatus = ['All', ...JOB_STATUS];
+const filterJobStatusList = ['All', ...JOB_STATUS];
 const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
 const filterStatusList = ['All', ...JOB_STATUS_LIST];
 const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
@@ -140,7 +140,7 @@ export const JobStatusReport = () => {
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
 
-  const [jobStatus, setJobStatus] = useState(filterJobStatus[0]);
+  const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
   const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
 
   const [departement, setDepartements] = useState(filterDepartmentList[0]);
@@ -161,6 +161,7 @@ export const JobStatusReport = () => {
     const params: {
       page: number;
       limit: number;
+      status?: string;
       fullPaid?: string;
       statusType?: string;
       departmentId?: number;
@@ -181,6 +182,11 @@ export const JobStatusReport = () => {
       }
     }
 
+    // Add status filter if set
+    if (jobStatusFilter && jobStatusFilter !== 'All') {
+      params.status = jobStatusFilter;
+    }
+
     // Add status list filter if set
     if (statusListFilter && statusListFilter !== 'All') {
       params.statusType = statusListFilter;
@@ -198,7 +204,7 @@ export const JobStatusReport = () => {
     }
 
     return fetchJobStatuses(params);
-  }, [paymentStatusFilter, statusListFilter, departmentFilter]);
+  }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
@@ -239,15 +245,15 @@ export const JobStatusReport = () => {
   }, []);
 
   const filterByJobStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: jobStatusParam }: { item: FilterJobStatusType } = e;
+    const { item: jobStatus }: { item: FilterJobStatusType } = e;
 
-    if (jobStatusParam === 'All') {
+    setJobStatus(jobStatus);
+
+    if (jobStatus === 'All') {
       setJobStatusFilter(null);
     } else {
-      setJobStatusFilter(jobStatusParam);
+      setJobStatusFilter(jobStatus);
     }
-
-    setJobStatus(jobStatusParam);
 
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
@@ -384,7 +390,7 @@ export const JobStatusReport = () => {
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
-                items={filterJobStatus}
+                items={filterJobStatusList}
                 stylingMode='text'
                 text={jobStatus}
                 dropDownOptions={dropDownOptions}
@@ -548,6 +554,11 @@ export const JobStatusReport = () => {
             dataField='FullPaid'
             caption='Full Paid'
             hidingPriority={2}
+          />
+          <Column
+            dataField='Status'
+            caption='Status'
+            hidingPriority={1}
           />
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />

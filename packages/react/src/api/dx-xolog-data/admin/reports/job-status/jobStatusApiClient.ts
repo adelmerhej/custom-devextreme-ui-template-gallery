@@ -16,6 +16,8 @@ const getData = async(queryString?: string, token?: string) => {
       headers.Authorization = `Bearer ${token}`;
     }
 
+    console.log('Fetching Job Status with query:', queryString);
+
     const response = await fetch(`${baseUrl}/job-status${queryString ? `?${queryString}` : ''}`, {
       method: 'GET',
       headers: headers,
