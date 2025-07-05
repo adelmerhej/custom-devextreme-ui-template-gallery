@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
 import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
+//import FilterBuilder, { type FilterBuilderTypes } from 'devextreme-react/filter-builder';
 
 // Importing data fetching function
 import { fetchJobStatuses } from '../../api/dx-xolog-data/admin/reports/job-status/jobStatusApiClient';
@@ -14,7 +15,8 @@ import {
   DataGrid, DataGridRef,
   Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
   ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
-  DataGridTypes, Paging, Pager, Grouping, GroupPanel, FilterRow
+  DataGridTypes, Paging, Pager, Grouping, GroupPanel,
+  FilterRow, Summary, GroupItem, SortByGroupSummaryInfo
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
@@ -34,6 +36,8 @@ import { ContactStatus } from '../../components';
 import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
+
+import './job-status-report.scss';
 
 type FilterJobStatusType = JobStatus | 'All';
 type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
@@ -142,7 +146,7 @@ export const JobStatusReport = () => {
   const [departement, setDepartements] = useState(filterDepartmentList[0]);
   const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
 
-  const [statusList, setStatusList] = useState(filterStatusList[0]);
+  const [statusList, setStatusList] = useState('New');
   const [statusListFilter, setStatusListFilter] = useState<string>('New');
 
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
@@ -151,14 +155,6 @@ export const JobStatusReport = () => {
   const gridRef = useRef<DataGridRef>(null);
 
   let newContactData: IJobStatus;
-
-  // Helper function to get auth token (placeholder for when auth system includes tokens)
-  const getAuthToken = useCallback(() => {
-    // When your auth system includes tokens, you would get it like:
-    // return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    // For now, return undefined since the current auth system doesn't use tokens
-    return undefined;
-  }, []);
 
   // Helper function to load data with current parameters
   const loadJobStatusesData = useCallback(() => {
@@ -357,7 +353,7 @@ export const JobStatusReport = () => {
           }}
         >
           <Grouping contextMenuEnabled />
-          <GroupPanel visible /> {/* or "auto" */}
+          <GroupPanel visible />
           <Paging defaultPageSize={100} />
           <Pager visible showPageSizeSelector />
           <LoadPanel showPane={false} />
@@ -374,7 +370,7 @@ export const JobStatusReport = () => {
           <Scrolling mode='virtual' />
           <Toolbar>
             <Item location='before'>
-              <div className='grid-header'>job Status Report</div>
+              <div className='grid-header'>Job Status Report</div>
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
@@ -451,60 +447,107 @@ export const JobStatusReport = () => {
           <Column
             dataField='JobNo'
             caption='Job#'
-            dataType='string'
+            dataType='number'
+            alignment='left'
             sortOrder='asc'
-            hidingPriority={5}
+            width={100}
+            hidingPriority={18}
           />
           <Column
             dataField='JobDate'
             caption='Job Date'
             dataType='date'
-            hidingPriority={5}
-            minWidth={150}
+            hidingPriority={17}
+            width={100}
+          />
+          <Column
+            dataField='ReferenceNo'
+            caption='XONO'
+            dataType='string'
+            width={100}
+            hidingPriority={16}
           />
           <Column
             dataField='CustomerName'
             caption='Customer'
-            hidingPriority={5}
+            hidingPriority={15}
             dataType='string'
-            minWidth={150}
+            width={250}
             cellRender={cellNameRender}
           />
           <Column
             dataField='Eta'
             caption='ETA'
             dataType='date'
-            hidingPriority={3}
+            width={100}
+            hidingPriority={14}
           />
           <Column
             dataField='Ata'
             caption='ATA'
             dataType='date'
-            hidingPriority={3}
+            width={100}
+            hidingPriority={13}
           />
           <Column
-            dataField='Arrival'
-            caption='Arrival'
-            dataType='date'
-            hidingPriority={3}
+            dataField='StatusType'
+            caption='Status Type'
+            width={100}
+            hidingPriority={12}
           />
           <Column
             dataField='TotalProfit'
             caption='Total Profit'
             dataType='number'
-            hidingPriority={5}
+            hidingPriority={11}
             cellRender={cellProfitRender}
             format='currency'
           />
           <Column
-            dataField='StatusType'
-            caption='Status Type'
-            hidingPriority={1}
+            dataField='PaymentDate'
+            caption='Payment Date'
+            dataType='date'
+            hidingPriority={10}
           />
           <Column
             dataField='DepartmentName'
             caption='Department Name'
-            hidingPriority={1}
+            hidingPriority={9}
+          />
+          <Column
+            dataField='Arrival'
+            caption='Arrival'
+            hidingPriority={8}
+          />
+          <Column
+            dataField='MemberOf'
+            caption='Member Of'
+            hidingPriority={7}
+          />
+          <Column
+            dataField='OperatingUserId'
+            caption='Operating User'
+            hidingPriority={6}
+          />
+          <Column
+            dataField='Tejrim'
+            caption='Tejrim'
+            hidingPriority={5}
+          />
+          <Column
+            dataField='CanceledJob'
+            caption='Canceled Job'
+            hidingPriority={4}
+          />
+          <Column
+            dataField='PendingCosts'
+            caption='Pending Costs'
+            hidingPriority={3}
+          />
+          <Column
+            dataField='FullPaid'
+            caption='Full Paid'
+            hidingPriority={2}
           />
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />

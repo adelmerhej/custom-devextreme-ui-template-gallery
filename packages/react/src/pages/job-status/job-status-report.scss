@@ -1,0 +1,181 @@
+@use '../../variables.scss' as *;
+
+.view.crm-contact-list {
+  // DataGrid font size overrides
+  .grid.theme-dependent {
+    // Header filter specific styles
+    .dx-header-filter,
+    .dx-header-filter-indicator {
+      font-size: 12px !important;  // Adjusted for better readability
+    }
+
+    // Header filter popup content
+    .dx-header-filter-menu {
+      font-size: 11px !important;
+    }
+
+    // DataGrid general font size
+    .dx-datagrid {
+      font-size: 12px !important;
+    }
+
+    // Header cells
+    .dx-datagrid-headers {
+      font-size: 11px !important;
+      
+      .dx-header-filter {
+        font-size: 11px !important;
+      }
+    }
+
+    // Data cells
+    .dx-datagrid-rowsview {
+      font-size: 11px !important;
+    }
+
+    // Toolbar items
+    .dx-toolbar {
+      font-size: 11px !important;
+      
+      .dx-button-text {
+        font-size: 12px !important; // Adjusted for better readability
+      }
+      
+      .dx-dropdownbutton-button-text {
+        font-size: 11px !important;
+      }
+    }
+
+    // Filter row
+    .dx-datagrid-filter-row {
+      font-size: 11px !important;
+    }
+
+    // Search panel
+    .dx-datagrid-search-panel {
+      font-size: 11px !important;
+    }
+
+    // Pager
+    .dx-datagrid-pager {
+      font-size: 11px !important;   // Adjusted for better readability
+    }
+
+    // Column chooser
+    .dx-column-chooser {
+      font-size: 11px !important; 
+    }
+
+    // Group panel
+    .dx-datagrid-group-panel {
+      font-size: 11px !important;
+    }
+
+    // Column specific styles
+    .dx-datagrid-headers {
+      .dx-datagrid-table {
+        .dx-row {
+          td {
+            font-size: 11px !important;
+            padding: 8px 12px !important; // Reduced padding for compact view
+          }
+        }
+      }
+    }
+
+    // Data column cells
+    .dx-datagrid-rowsview {
+      .dx-datagrid-table {
+        .dx-row {
+          td {
+            font-size: 11px !important;
+            padding: 8px 12px !important; // Reduced padding for compact view
+          }
+        }
+      }
+    }
+
+    // Column headers
+    .dx-datagrid-headers {
+      .dx-header-row {
+        td {
+          font-size: 11px !important;
+          padding: 8px 12px !important;
+        }
+      }
+    }
+
+    // Specific column content
+    .dx-data-row {
+      font-size: 11px !important;
+      
+      td {
+        font-size: 11px !important;
+      }
+    }
+
+    // Name template styling
+    .name-template {
+      font-size: 11px !important;
+      
+      .position {
+        font-size: 10px !important;
+      }
+    }
+
+    // Currency formatting
+    .dx-datagrid-rowsview {
+      span {
+        font-size: 11px !important;
+      }
+    }
+  }
+}
+
+// Header filter overlay specific styles (global to catch popups)
+.dx-overlay-wrapper {
+  .dx-header-filter-menu {
+    font-size: 11px !important;
+    
+    .dx-list-item {
+      font-size: 11px !important;
+    }
+    
+    .dx-checkbox {
+      font-size: 11px !important;
+    }
+    
+    .dx-checkbox-text {
+      font-size: 11px !important;
+    }
+  }
+}
+
+// Additional header filter popup styles
+.dx-popup-wrapper {
+  .dx-header-filter-menu {
+    font-size: 11px !important;
+    
+    .dx-treeview-item {
+      font-size: 11px !important;
+    }
+    
+    .dx-searchbox {
+      font-size: 11px !important;
+    }
+    
+    .dx-textbox {
+      font-size: 11px !important;
+    }
+  }
+}
+
+// Ensure header filter buttons and text are small
+.dx-header-filter-menu,
+.dx-header-filter {
+  font-size: 11px !important;
+  
+  * {
+    font-size: 11px !important;
+  }
+}
