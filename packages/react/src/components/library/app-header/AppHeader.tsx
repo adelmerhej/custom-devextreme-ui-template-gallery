@@ -1,6 +1,6 @@
 import React from 'react';
 import Toolbar, { Item } from 'devextreme-react/toolbar';
-import TextBox from 'devextreme-react/text-box';
+//import TextBox from 'devextreme-react/text-box';
 import Button from 'devextreme-react/button';
 
 import { Template } from 'devextreme-react/core/template';
@@ -20,9 +20,9 @@ export const AppHeader = ({ menuToggleEnabled, title, toggleMenu, className }: A
           <Button icon='menu' stylingMode='text' onClick={toggleMenu} />
         </Item>
         <Item location='before' cssClass='header-title' text={title} visible={!!title} />
-        <Item location='after' locateInMenu='auto' cssClass='global-search-box'>
+        {/* <Item location='after' locateInMenu='auto' cssClass='global-search-box'>
           <TextBox placeholder='Search' width={180} mode='search' stylingMode='filled' />
-        </Item>
+        </Item> */}
         <Item location='after' locateInMenu='never'>
           <ThemeSwitcher />
         </Item>
