@@ -130,6 +130,14 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
 const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
 
+// Helper function to format number with thousand separators
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export const JobStatusReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
@@ -151,6 +159,8 @@ export const JobStatusReport = () => {
 
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
+
+  const [totalProfit, setTotalProfit] = useState<number>(0);
 
   const gridRef = useRef<DataGridRef>(null);
 
@@ -212,6 +222,16 @@ export const JobStatusReport = () => {
       load: loadJobStatusesData,
     }));
   }, [loadJobStatusesData]);
+
+  // Calculate total profit when grid data changes
+  useEffect(() => {
+    if (gridDataSource) {
+      gridDataSource.load().then((data: IJobStatus[]) => {
+        const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+        setTotalProfit(total);
+      });
+    }
+  }, [gridDataSource]);
 
   const changePopupVisibility = useCallback((isVisble) => {
     setPopupVisible(isVisble);
@@ -378,6 +398,9 @@ export const JobStatusReport = () => {
             <Item location='before'>
               <div className='grid-header'>Job Status Report</div>
             </Item>
+            <Item location='after'>
+              <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
+            </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
                 items={filterDepartmentList}
@@ -421,7 +444,7 @@ export const JobStatusReport = () => {
             <Item location='after' locateInMenu='auto'>
               <Button
                 icon='plus'
-                text='Sync data'
+                text='Sync'
                 type='default'
                 stylingMode='contained'
                 onClick={syncDataOnClick}

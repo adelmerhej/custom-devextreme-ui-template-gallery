@@ -37,8 +37,13 @@
     .dx-toolbar {
       font-size: 11px !important;
       
+      .total-profit-display {
+        font-size: 14px !important;
+        color: var(--dx-color-text);
+        margin-right: 10px; // Adjusted for spacing
+      }
       .dx-button-text {
-        font-size: 12px !important; // Adjusted for better readability
+        font-size: 11px !important; // Adjusted for better readability
       }
       
       .dx-dropdownbutton-button-text {
