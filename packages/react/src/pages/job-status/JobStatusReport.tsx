@@ -583,6 +583,23 @@ export const JobStatusReport = () => {
             caption='Status'
             hidingPriority={1}
           />
+
+          <Summary>
+            <GroupItem
+              column='TotalProfit'
+              summaryType='count'
+              displayFormat='{0} orders'
+            />
+            <GroupItem
+              column='TotalProfit'
+              summaryType='sum'
+              valueFormat='currency'
+              displayFormat='Total: {0}'
+              showInGroupFooter
+            />
+          </Summary>
+          <SortByGroupSummaryInfo summaryItem='count' />
+
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
         <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>
