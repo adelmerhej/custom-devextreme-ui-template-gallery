@@ -593,7 +593,6 @@ export const JobStatusReport = () => {
             <GroupItem
               column='TotalProfit'
               summaryType='sum'
-              valueFormat='currency'
               displayFormat='Total: {0}'
               showInGroupFooter
             />

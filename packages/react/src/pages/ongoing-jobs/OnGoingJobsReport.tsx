@@ -14,7 +14,8 @@ import {
   DataGrid, DataGridRef,
   Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
   ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
-  DataGridTypes, Paging, Pager, Grouping, GroupPanel
+  DataGridTypes, Paging, Pager, Grouping, GroupPanel,
+  FilterRow, Summary, GroupItem, SortByGroupSummaryInfo
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
@@ -25,18 +26,25 @@ import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
-import { ContactStatus as ContactStatusType, IOngoingJob } from '@/types/ongoingJob';
+import { JobStatusPayment as JobStatusPaymentType,
+  IOngoingJob, JobStatus, StatusList, JobStatusDepartments } from '@/types/ongoingJob';
 
 import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
 
-import { JOB_STATUS, newJob } from '../../shared/constants';
+import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
-type FilterContactStatus = ContactStatusType | 'All';
+type FilterJobStatusType = JobStatus | 'All';
+type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
+type FilterStatusListType = StatusList | 'All';
+type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
-const filterStatusList = ['All', ...JOB_STATUS];
+const filterJobStatusList = ['All', ...JOB_STATUS];
+const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
+const filterStatusList = ['All', ...JOB_STATUS_LIST];
+const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
@@ -65,6 +73,31 @@ const fieldRender = (text: string) => (
   </>
 );
 
+const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: number[], specialCondition?: { id: number, jobType: number } } => {
+  switch (department) {
+    case 'All':
+      return { ids: [0] };
+    case 'Air Export':
+      return { ids: [2] };
+    case 'Air Import':
+      return { ids: [5] };
+    case 'Land Freight':
+      return { ids: [6] };
+    case 'Air Clearance':
+      return { ids: [8] };
+    case 'Sea Import':
+      return { ids: [16] };
+    case 'Sea Clearance':
+      return { ids: [17] };
+    case 'Sea Export':
+      return { ids: [18] };
+    case 'Sea Cross':
+      return { ids: [16], specialCondition: { id: 16, jobType: 3 } };
+    default:
+      return { ids: [0] };
+  }
+};
+
 const onExporting = (e: DataGridTypes.ExportingEvent) => {
   if (e.format === 'pdf') {
     const doc = new JsPdf();
@@ -72,11 +105,11 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       jsPDFDocument: doc,
       component: e.component,
     }).then(() => {
-      doc.save('OngoingJobsReport.pdf');
+      doc.save('JobStatusReport.pdf');
     });
   } else {
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('OngoingJobsReport');
+    const worksheet = workbook.addWorksheet('JobStatusReport');
 
     exportDataGridToXLSX({
       component: e.component,
@@ -84,7 +117,7 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'OngoingJobsReport.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'JobStatusReport.xlsx');
       });
     });
     e.cancel = true;
@@ -93,6 +126,14 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
 
 const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
+
+// Helper function to format number with thousand separators
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
 
 export const OngoingJobsReport = () => {
   // Get auth context for token access (when auth system includes tokens)
@@ -103,35 +144,91 @@ export const OngoingJobsReport = () => {
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
+
+  const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
+  const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
+
+  const [departement, setDepartements] = useState(filterDepartmentList[0]);
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+
+  const [statusList, setStatusList] = useState('New');
+  const [statusListFilter, setStatusListFilter] = useState<string>('New');
+
+  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
+
+  const [totalProfit, setTotalProfit] = useState<number>(0);
+
   const gridRef = useRef<DataGridRef>(null);
 
   let newContactData: IOngoingJob;
 
-  // Helper function to get auth token (placeholder for when auth system includes tokens)
-  const getAuthToken = useCallback(() => {
-    // When your auth system includes tokens, you would get it like:
-    // return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    // For now, return undefined since the current auth system doesn't use tokens
-    return undefined;
-  }, []);
-
   // Helper function to load data with current parameters
-  const loadOnGoingJobsData = useCallback(() => {
-    return fetchOngoingJobs({
+  const loadJobStatusesData = useCallback(() => {
+    const params: {
+      page: number;
+      limit: number;
+      status?: string;
+      fullPaid?: string;
+      statusType?: string;
+      departmentId?: number;
+      jobType?: number;
+    } = {
       page: 1,
       limit: 100,
-      // status: 'Active', // Optional: filter by status
-      // TotalProfit: 0, // Optional: minimum profit filter
-      token: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NjU1NWVmN2VhM2U1OWEzYzk3NGM5NSIsImlhdCI6MTc1MTQ3NjY2NCwiZXhwIjoxNzUxNTAxODY0fQ.ZemXLz8jjApseTHaFckPNfqufF967TClfmFArFFllJY'//getAuthToken() // Will be undefined until auth system includes tokens
-    });
-  }, [getAuthToken]);
+    };
+
+    // Add payment status filter if set
+    if (paymentStatusFilter) {
+      if (paymentStatusFilter === 'Full Paid') {
+        params.fullPaid = 'true';
+      } else if (paymentStatusFilter === 'Not Paid') {
+        params.fullPaid = 'false';
+      }else {
+        params.fullPaid = undefined;
+      }
+    }
+
+    // Add status filter if set
+    if (jobStatusFilter && jobStatusFilter !== 'All') {
+      params.status = jobStatusFilter;
+    }
+
+    // Add status list filter if set
+    if (statusListFilter && statusListFilter !== 'All') {
+      params.statusType = statusListFilter;
+    }
+
+    // Add department filter if set
+    if (departmentFilter && departmentFilter !== 'All') {
+      const departmentResult = getDepartmentId(departmentFilter as FilterJobStatusDepartmentType);
+      if (departmentResult.ids[0] !== 0) {
+        params.departmentId = departmentResult.ids[0];
+        if (departmentResult.specialCondition) {
+          params.jobType = departmentResult.specialCondition.jobType;
+        }
+      }
+    }
+
+    return fetchOngoingJobs(params);
+  }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadOnGoingJobsData,
+      load: loadJobStatusesData,
     }));
-  }, [loadOnGoingJobsData]);
+  }, [loadJobStatusesData]);
+
+  // Calculate total profit when grid data changes
+  useEffect(() => {
+    if (gridDataSource) {
+      gridDataSource.load().then((data: IOngoingJob[]) => {
+        const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+        setTotalProfit(total);
+      });
+    }
+  }, [gridDataSource]);
 
   const changePopupVisibility = useCallback((isVisble) => {
     setPopupVisible(isVisble);
@@ -153,29 +250,88 @@ export const OngoingJobsReport = () => {
     // Refresh data with current parameters
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadOnGoingJobsData,
+      load: loadJobStatusesData,
     }));
 
     gridRef.current?.instance().refresh();
-  }, [loadOnGoingJobsData]);
+  }, [loadJobStatusesData]);
 
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
     setContactId(data._id);
     setPanelOpened(true);
   }, []);
 
-  const [status, setStatus] = useState(filterStatusList[0]);
+  const filterByJobStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: jobStatus }: { item: FilterJobStatusType } = e;
 
-  const filterByStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: status }: { item: FilterContactStatus } = e;
-    if (status === 'All') {
-      gridRef.current?.instance().clearFilter();
+    setJobStatus(jobStatus);
+
+    if (jobStatus === 'All') {
+      setJobStatusFilter(null);
     } else {
-      gridRef.current?.instance().filter(['StatusType', '=', status]);
+      setJobStatusFilter(jobStatus);
     }
 
-    setStatus(status);
-  }, []);
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
+
+  const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
+
+    if (departement === 'All') {
+      setDepartmentFilter(null);
+    } else {
+      setDepartmentFilter(departement);
+    }
+
+    setDepartements(departement);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
+
+  const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: statusList }: { item: FilterStatusListType } = e;
+
+    if (statusList === 'All') {
+      setStatusListFilter('All');
+    } else {
+      setStatusListFilter(statusList);
+    }
+
+    setStatusList(statusList);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
+
+  const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
+
+    if (paymentStatus === 'All') {
+      setPaymentStatusFilter(null);
+    } else {
+      setPaymentStatusFilter(paymentStatus);
+    }
+
+    setPaymentStatus(paymentStatus);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadJobStatusesData,
+    }));
+  }, [loadJobStatusesData]);
 
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
@@ -220,7 +376,7 @@ export const OngoingJobsReport = () => {
           }}
         >
           <Grouping contextMenuEnabled />
-          <GroupPanel visible /> {/* or "auto" */}
+          <GroupPanel visible />
           <Paging defaultPageSize={100} />
           <Pager visible showPageSizeSelector />
           <LoadPanel showPane={false} />
@@ -237,22 +393,55 @@ export const OngoingJobsReport = () => {
           <Scrolling mode='virtual' />
           <Toolbar>
             <Item location='before'>
-              <div className='grid-header'>Ongoing Jobs Report</div>
+              <div className='grid-header'>Job Status Report</div>
+            </Item>
+            <Item location='after'>
+              <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterDepartmentList}
+                stylingMode='text'
+                text={departement}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobDepartment}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterJobStatusList}
+                stylingMode='text'
+                text={jobStatus}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobStatus}
+              />
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
                 items={filterStatusList}
                 stylingMode='text'
-                text={status}
+                text={statusList}
                 dropDownOptions={dropDownOptions}
                 useSelectMode
-                onSelectionChanged={filterByStatus}
+                onSelectionChanged={filterByStatusList}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterPaymentList}
+                stylingMode='text'
+                text={paymentStatus}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobPaymentStatus}
               />
             </Item>
             <Item location='after' locateInMenu='auto'>
               <Button
                 icon='plus'
-                text='Sync data'
+                text='Sync'
                 type='default'
                 stylingMode='contained'
                 onClick={syncDataOnClick}
@@ -284,61 +473,129 @@ export const OngoingJobsReport = () => {
           <Column
             dataField='JobNo'
             caption='Job#'
-            dataType='string'
+            dataType='number'
+            alignment='left'
             sortOrder='asc'
-            hidingPriority={5}
+            width={100}
+            hidingPriority={18}
           />
           <Column
             dataField='JobDate'
             caption='Job Date'
             dataType='date'
-            hidingPriority={5}
-            minWidth={150}
+            hidingPriority={17}
+            width={100}
+          />
+          <Column
+            dataField='ReferenceNo'
+            caption='XONO'
+            dataType='string'
+            width={100}
+            hidingPriority={16}
           />
           <Column
             dataField='CustomerName'
             caption='Customer'
-            hidingPriority={5}
+            hidingPriority={15}
             dataType='string'
-            minWidth={150}
+            width={250}
             cellRender={cellNameRender}
           />
           <Column
             dataField='Eta'
             caption='ETA'
             dataType='date'
-            hidingPriority={3}
+            width={100}
+            hidingPriority={14}
           />
           <Column
             dataField='Ata'
             caption='ATA'
             dataType='date'
-            hidingPriority={3}
+            width={100}
+            hidingPriority={13}
           />
           <Column
-            dataField='Arrival'
-            caption='Arrival'
-            dataType='date'
-            hidingPriority={3}
+            dataField='StatusType'
+            caption='Status Type'
+            width={100}
+            hidingPriority={12}
           />
           <Column
             dataField='TotalProfit'
             caption='Total Profit'
             dataType='number'
-            hidingPriority={5}
+            hidingPriority={11}
             cellRender={cellProfitRender}
             format='currency'
           />
           <Column
-            dataField='StatusType'
-            caption='Status Type'
-            hidingPriority={1}
+            dataField='PaymentDate'
+            caption='Payment Date'
+            dataType='date'
+            hidingPriority={10}
           />
           <Column
             dataField='DepartmentName'
             caption='Department Name'
+            hidingPriority={9}
+          />
+          <Column
+            dataField='Arrival'
+            caption='Arrival'
+            hidingPriority={8}
+          />
+          <Column
+            dataField='MemberOf'
+            caption='Member Of'
+            hidingPriority={7}
+          />
+          <Column
+            dataField='OperatingUserId'
+            caption='Operating User'
+            hidingPriority={6}
+          />
+          <Column
+            dataField='Tejrim'
+            caption='Tejrim'
+            hidingPriority={5}
+          />
+          <Column
+            dataField='CanceledJob'
+            caption='Canceled Job'
+            hidingPriority={4}
+          />
+          <Column
+            dataField='PendingCosts'
+            caption='Pending Costs'
+            hidingPriority={3}
+          />
+          <Column
+            dataField='FullPaid'
+            caption='Full Paid'
+            hidingPriority={2}
+          />
+          <Column
+            dataField='Status'
+            caption='Status'
             hidingPriority={1}
           />
+
+          <Summary>
+            <GroupItem
+              column='TotalProfit'
+              summaryType='count'
+              displayFormat='{0} orders'
+            />
+            <GroupItem
+              column='TotalProfit'
+              summaryType='sum'
+              displayFormat='Total: {0}'
+              showInGroupFooter
+            />
+          </Summary>
+          <SortByGroupSummaryInfo summaryItem='count' />
+
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
         <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>

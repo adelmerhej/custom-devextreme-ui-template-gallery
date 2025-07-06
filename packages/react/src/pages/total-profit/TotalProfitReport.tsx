@@ -30,6 +30,9 @@ import {
   Pager,
   Grouping,
   GroupPanel,
+  Summary,
+  GroupItem,
+  SortByGroupSummaryInfo,
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
@@ -125,6 +128,14 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
 const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
 
+// Helper function to format number with thousand separators
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export const TotalProfitReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
@@ -139,6 +150,8 @@ export const TotalProfitReport = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [totalProfit, setTotalProfit] = useState<number>(0);
 
   let newContactData: ITotalProfit;
 
@@ -170,6 +183,16 @@ export const TotalProfitReport = () => {
       })
     );
   }, [loadTotalProfitsData]);
+
+  // Calculate total profit when grid data changes
+  useEffect(() => {
+    if (gridDataSource) {
+      gridDataSource.load().then((data: ITotalProfit[]) => {
+        const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+        setTotalProfit(total);
+      });
+    }
+  }, [gridDataSource]);
 
   const changePopupVisibility = useCallback((isVisble) => {
     setPopupVisible(isVisble);
@@ -306,6 +329,9 @@ export const TotalProfitReport = () => {
             <Item location='before'>
               <div className='grid-header'>Total Profit Report</div>
             </Item>
+            <Item location='after'>
+              <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
+            </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
                 items={filterStatusList}
@@ -406,7 +432,22 @@ export const TotalProfitReport = () => {
             caption='Department Name'
             hidingPriority={1}
           />
+          <Summary>
+            <GroupItem
+              column='TotalProfit'
+              summaryType='count'
+              displayFormat='{0} orders'
+            />
+            <GroupItem
+              column='TotalProfit'
+              summaryType='sum'
+              displayFormat='Total: {0}'
+              showInGroupFooter
+            />
+          </Summary>
+          <SortByGroupSummaryInfo summaryItem='count' />
         </DataGrid>
+
         <ContactPanel
           contactId={contactId}
           isOpened={isPanelOpened}

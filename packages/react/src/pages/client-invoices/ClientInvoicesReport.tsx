@@ -14,7 +14,10 @@ import {
   DataGrid, DataGridRef,
   Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
   ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
-  DataGridTypes, Paging, Pager, Grouping, GroupPanel
+  DataGridTypes, Paging, Pager, Grouping, GroupPanel,
+  Summary,
+  GroupItem,
+  SortByGroupSummaryInfo
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
@@ -25,7 +28,8 @@ import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
-import { ContactStatus as ContactStatusType, IEmptyContainer } from '@/types/emptyContainer';
+import { JobStatusPayment as JobStatusPaymentType,
+  IClientInvoice, JobStatus, StatusList, JobStatusDepartments } from '@/types/clientInvoice';
 
 import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
@@ -34,7 +38,7 @@ import { JOB_STATUS, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
-type FilterContactStatus = ContactStatusType | 'All';
+type FilterContactStatus = JobStatusPaymentType | 'All';
 
 const filterStatusList = ['All', ...JOB_STATUS];
 
@@ -94,18 +98,28 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
 const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
 
+// Helper function to format number with thousand separators
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export const ClientInvoicesReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
-  const [gridDataSource, setGridDataSource] = useState<DataSource<IEmptyContainer[], string>>();
+  const [gridDataSource, setGridDataSource] = useState<DataSource<IClientInvoice[], string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
   const gridRef = useRef<DataGridRef>(null);
+  const [totalProfit, setTotalProfit] = useState<number>(0);
+  const [totalInvoice, setTotalInvoice] = useState<number>(0);
 
-  let newContactData: IEmptyContainer;
+  let newContactData: IClientInvoice;
 
   // Helper function to get auth token (placeholder for when auth system includes tokens)
   const getAuthToken = useCallback(() => {
@@ -120,9 +134,6 @@ export const ClientInvoicesReport = () => {
     return fetchClientInvoices({
       page: 1,
       limit: 100,
-      // status: 'Active', // Optional: filter by status
-      // TotalProfit: 0, // Optional: minimum profit filter
-      token: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NjU1NWVmN2VhM2U1OWEzYzk3NGM5NSIsImlhdCI6MTc1MTQ3NjY2NCwiZXhwIjoxNzUxNTAxODY0fQ.ZemXLz8jjApseTHaFckPNfqufF967TClfmFArFFllJY'//getAuthToken() // Will be undefined until auth system includes tokens
     });
   }, [getAuthToken]);
 
@@ -132,6 +143,18 @@ export const ClientInvoicesReport = () => {
       load: loadClientInvoicesData,
     }));
   }, [loadClientInvoicesData]);
+
+  // Calculate total profit when grid data changes
+  useEffect(() => {
+    if (gridDataSource) {
+      gridDataSource.load().then((data: IClientInvoice[]) => {
+        const totalInvoice = data.reduce((sum, item) => sum + (item.TotalInvoices || 0), 0);
+        const totalProfit = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+        setTotalInvoice(totalInvoice);
+        setTotalProfit(totalProfit);
+      });
+    }
+  }, [gridDataSource]);
 
   const changePopupVisibility = useCallback((isVisble) => {
     setPopupVisible(isVisble);
@@ -239,6 +262,12 @@ export const ClientInvoicesReport = () => {
             <Item location='before'>
               <div className='grid-header'>Client Invoices Report</div>
             </Item>
+            <Item location='after'>
+              <div className='total-profit-display'>Total Invoices: ${formatCurrency(totalInvoice)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
+            </Item>
+            <Item location='after'>
+              <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
+            </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
                 items={filterStatusList}
@@ -284,61 +313,122 @@ export const ClientInvoicesReport = () => {
           <Column
             dataField='JobNo'
             caption='Job#'
-            dataType='string'
+            dataType='number'
+            alignment='left'
             sortOrder='asc'
-            hidingPriority={5}
+            width={100}
+            hidingPriority={20}
           />
           <Column
-            dataField='JobDate'
-            caption='Job Date'
-            dataType='date'
-            hidingPriority={5}
-            minWidth={150}
+            dataField='ReferenceNo'
+            caption='Reference#'
+            hidingPriority={19}
+            width={150}
+          />
+          <Column
+            dataField='DepartmentName'
+            caption='Department'
+            hidingPriority={18}
+            width={150}
           />
           <Column
             dataField='CustomerName'
             caption='Customer'
-            hidingPriority={5}
+            hidingPriority={17}
             dataType='string'
-            minWidth={150}
+            width={250}
             cellRender={cellNameRender}
           />
           <Column
-            dataField='Eta'
-            caption='ETA'
-            dataType='date'
-            hidingPriority={3}
+            dataField='Status'
+            caption='Status'
+            width={150}
+            hidingPriority={16}
           />
           <Column
-            dataField='Ata'
-            caption='ATA'
-            dataType='date'
-            hidingPriority={3}
-          />
-          <Column
-            dataField='Arrival'
-            caption='Arrival'
-            dataType='date'
-            hidingPriority={3}
+            dataField='TotalInvoiceAmount'
+            caption='Total Invoices'
+            hidingPriority={15}
+            dataType='number'
+            cellRender={cellProfitRender}
+            format='currency'
           />
           <Column
             dataField='TotalProfit'
             caption='Total Profit'
             dataType='number'
-            hidingPriority={5}
+            hidingPriority={14}
             cellRender={cellProfitRender}
             format='currency'
           />
           <Column
-            dataField='StatusType'
-            caption='Status Type'
-            hidingPriority={1}
+            dataField='Mbol'
+            caption='MBL'
+            hidingPriority={13}
           />
           <Column
-            dataField='DepartmentName'
-            caption='Department Name'
-            hidingPriority={1}
+            dataField='POL'
+            caption='POL'
+            hidingPriority={12}
           />
+          <Column
+            dataField='POD'
+            caption='POD#'
+            hidingPriority={11}
+          />
+          <Column
+            dataField='Volume'
+            caption='Volume'
+            hidingPriority={10}
+          />
+          <Column
+            dataField='Consignee'
+            caption='Consignee'
+            hidingPriority={9}
+          />
+          <Column
+            dataField='Etd'
+            caption='ETD'
+            dataType='date'
+            hidingPriority={8}
+          />
+          <Column
+            dataField='Eta'
+            caption='ETA'
+            dataType='date'
+            hidingPriority={7}
+          />
+          <Column
+            dataField='Atd'
+            caption='ATD'
+            dataType='date'
+            hidingPriority={6}
+          />
+          <Column
+            dataField='Ata'
+            caption='ATA'
+            dataType='date'
+            hidingPriority={5}
+          />
+          <Column
+            dataField='StatusType'
+            caption='Status Type'
+            hidingPriority={4}
+          />
+          <Summary>
+            <GroupItem
+              column='TotalProfit'
+              summaryType='count'
+              displayFormat='{0} orders'
+            />
+            <GroupItem
+              column='TotalProfit'
+              summaryType='sum'
+              displayFormat='Total: {0}'
+              showInGroupFooter
+            />
+          </Summary>
+          <SortByGroupSummaryInfo summaryItem='count' />
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
         <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>

@@ -1,13 +1,12 @@
-import { Activities } from './card-activities';
-import { Task } from './task';
-import { Opportunities } from './card-opportunities';
-import { JOB_STATUS } from '../shared/constants';
+import { JOB_STATUS, JOB_STATUS_LIST, JOB_STATUS_DEPARTMENTS, JOB_STATUS_PAYMENT } from '../shared/constants';
 
-export type ContactStatus = (typeof JOB_STATUS)[number];
+export type JobStatus = (typeof JOB_STATUS)[number];
 
-interface State {
-    stateShort: string;
-}
+export type JobStatusPayment = (typeof JOB_STATUS_PAYMENT)[number];
+
+export type StatusList = (typeof JOB_STATUS_LIST)[number];
+
+export type JobStatusDepartments = (typeof JOB_STATUS_DEPARTMENTS)[number];
 
 export interface IEmptyContainer extends Document {
   _id: string;
@@ -33,16 +32,6 @@ export interface IEmptyContainer extends Document {
   DepartmentId: string;
   MemberOf: string;
   JobType: string;
-  // Relationships
-  status: ContactStatus,
-  state: State,
-  opportunities: Opportunities,
-  activities: Activities[];
-  tasks: Task[];
-  image: string;
-  firstName: string;
-  lastName: string;
-  // END Relationships
   createdAt: Date;
   updatedAt: Date;
 }
