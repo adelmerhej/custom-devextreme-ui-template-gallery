@@ -31,8 +31,8 @@ export const ANALYTICS_PERIODS = {
 export const DEFAULT_ANALYTICS_PERIOD_KEY = 'All';
 
 export const JOB_STATUS = [
-  'On Water',
   'To Be Loaded',
+  'On Water',
   'Under Clearance',
 ];
 
