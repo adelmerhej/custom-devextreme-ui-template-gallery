@@ -49,7 +49,7 @@ const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
 );
 
 const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
-  const profit = cell.data.sumOfTotalProfit || cell.data.TotalProfit || 0;
+  const profit = cell.data.TotalProfit || 0;
   return <span>${profit.toFixed(2)}</span>;
 };
 
@@ -436,12 +436,12 @@ export const EmptyContainersReport = () => {
           />
           <Summary>
             <GroupItem
-              column='totalProfit'
+              column='TotalProfit'
               summaryType='count'
               displayFormat='{0} orders'
             />
             <GroupItem
-              column='totalProfit'
+              column='TotalProfit'
               summaryType='sum'
               displayFormat='Total: $ {0}'
               showInGroupFooter
