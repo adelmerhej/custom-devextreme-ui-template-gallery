@@ -28,7 +28,7 @@ export interface IEmptyContainer extends Document {
   vessel?: string;
   TotalInvoices?: number;
   TotalCosts?: number;
-  sumOfTotalProfit?: number;
+  TotalProfit?: number;
   DepartmentId: string;
   MemberOf: string;
   JobType: string;

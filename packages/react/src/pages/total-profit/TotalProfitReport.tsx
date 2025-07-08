@@ -437,7 +437,7 @@ export const TotalProfitReport = () => {
             <GroupItem
               column='TotalProfit'
               summaryType='sum'
-              displayFormat='Total: {0}'
+              displayFormat='Total: $ {0}'
               showInGroupFooter
             />
           </Summary>

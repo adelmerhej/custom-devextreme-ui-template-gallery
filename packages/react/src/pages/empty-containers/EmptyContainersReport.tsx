@@ -48,9 +48,10 @@ const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   </div>
 );
 
-const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
-  <span>${cell.data.TotalProfit?.toFixed(2) || '0.00'}</span>
-);
+const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
+  const profit = cell.data.sumOfTotalProfit || cell.data.TotalProfit || 0;
+  return <span>${profit.toFixed(2)}</span>;
+};
 
 const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: string) => {
   const date = cell.data[field];
@@ -137,8 +138,15 @@ export const EmptyContainersReport = () => {
   useEffect(() => {
     if (gridDataSource) {
       gridDataSource.load().then((data: IEmptyContainer[]) => {
-        const total = data.reduce((sum, item) => sum + (item.sumOfTotalProfit || 0), 0);
+        const total = data.reduce((sum, item) => {
+          const profit = item.TotalProfit || 0;
+          return sum + profit;
+        }, 0);
         console.log('Total Profit:', total);
+        console.log('Sample data items:', data.slice(0, 3).map(item => ({
+          JobNo: item.JobNo,
+          TotalProfit: item.TotalProfit
+        })));
         setTotalProfit(total);
       });
     }
@@ -301,7 +309,6 @@ export const EmptyContainersReport = () => {
             dataType='number'
             alignment='left'
             width={100}
-            hidingPriority={25}
             sortOrder='asc'
             sortIndex={1}
           />
@@ -309,7 +316,6 @@ export const EmptyContainersReport = () => {
             dataField='JobDate'
             caption='Job Date'
             dataType='date'
-            hidingPriority={24}
             width={100}
             visible={false}
             cellRender={(cell) => cellDateRender(cell, 'JobDate')}
@@ -320,12 +326,10 @@ export const EmptyContainersReport = () => {
             dataType='string'
             width={100}
             visible={false}
-            hidingPriority={23}
           />
           <Column
             dataField='CustomerName'
             caption='Customer'
-            hidingPriority={22}
             dataType='string'
             width={250}
             cellRender={cellNameRender}
@@ -335,113 +339,96 @@ export const EmptyContainersReport = () => {
             caption='ATA'
             dataType='date'
             width={100}
-            hidingPriority={21}
           />
           <Column
             dataField='StatusType'
             caption='Status Type'
             width={100}
             visible={false}
-            hidingPriority={20}
           />
           <Column
             dataField='TejrimDate'
             caption='Tejrim Date'
             dataType='date'
             width={150}
-            hidingPriority={19}
           />
           <Column
             dataField='dtCntrToCnee'
             caption='Cntr To Cnee'
             dataType='date'
             width={100}
-            hidingPriority={18}
             cellRender={(cell) => cellDateRender(cell, 'dtCntrToCnee')}
           />
           <Column
             dataField='ArrivalDays'
             caption='Arrival Days'
             width={100}
-            hidingPriority={17}
           />
           <Column
             dataField='TejrimDays'
             caption='Tejrim Days'
             width={100}
-            hidingPriority={16}
           />
           <Column
             dataField='DiffCntrToCnee'
             caption='Cntr to Cnee'
             width={100}
-            hidingPriority={15}
           />
           <Column
             dataField='TotalProfit'
             caption='Total Profit'
             dataType='number'
-            hidingPriority={14}
             cellRender={cellProfitRender}
             format='currency'
           />
           <Column
             dataField='ContainerNo'
             caption='Container#'
-            hidingPriority={13}
+            visible={false}
           />
           <Column
             dataField='CarrierName'
             caption='Carrier Name'
-            hidingPriority={12}
+            visible={false}
           />
           <Column
             dataField='UserName'
             caption='User Name'
-            hidingPriority={11}
+            visible={false}
           />
           <Column
             dataField='Notes'
             caption='Notes'
             visible={false}
-            hidingPriority={101}
-          />
-
-          <Column
-            dataField='FullPaid'
-            caption='Full Paid'
-            hidingPriority={9}
           />
           <Column
             dataField='Departure'
             caption='Departure'
-            hidingPriority={8}
+            visible={false}
           />
           <Column
             dataField='Destination'
             caption='Destination'
-            hidingPriority={7}
+            visible={false}
           />
           <Column
             dataField='FullPaid'
             caption='FullPaid'
-            hidingPriority={6}
+            visible={false}
           />
           <Column
             dataField='PaidDO'
             caption='Paid D/O'
-            hidingPriority={5}
+            visible={false}
           />
           <Column
             dataField='Mbol'
             caption='MBL'
             visible={false}
-            hidingPriority={4}
           />
           <Column
             dataField='DepartmentName'
             caption='Department'
-            hidingPriority={3}
             visible={false}
             groupIndex={0}
             sortOrder='desc'
@@ -449,14 +436,14 @@ export const EmptyContainersReport = () => {
           />
           <Summary>
             <GroupItem
-              column='TotalProfit'
+              column='totalProfit'
               summaryType='count'
               displayFormat='{0} orders'
             />
             <GroupItem
-              column='TotalProfit'
+              column='totalProfit'
               summaryType='sum'
-              displayFormat='Total: {0}'
+              displayFormat='Total: $ {0}'
               showInGroupFooter
             />
           </Summary>
