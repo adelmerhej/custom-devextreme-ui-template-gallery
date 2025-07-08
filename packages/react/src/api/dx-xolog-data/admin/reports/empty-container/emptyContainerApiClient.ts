@@ -61,8 +61,6 @@ export async function fetchEmptyContainers(params: {
 
     const data = await getData(queryString, params.token);
 
-    console.log('Fetched Empty Containers:', data.totalProfit, 'items:', data);
-
     // Return the data directly - assuming the API returns the expected format
     return data?.data || data || [];
 

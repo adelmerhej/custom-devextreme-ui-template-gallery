@@ -137,7 +137,8 @@ export const EmptyContainersReport = () => {
   useEffect(() => {
     if (gridDataSource) {
       gridDataSource.load().then((data: IEmptyContainer[]) => {
-        const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+        const total = data.reduce((sum, item) => sum + (item.sumOfTotalProfit || 0), 0);
+        console.log('Total Profit:', total);
         setTotalProfit(total);
       });
     }
@@ -299,9 +300,10 @@ export const EmptyContainersReport = () => {
             caption='Job#'
             dataType='number'
             alignment='left'
-            sortOrder='asc'
             width={100}
             hidingPriority={25}
+            sortOrder='asc'
+            sortIndex={1}
           />
           <Column
             dataField='JobDate'
@@ -309,12 +311,15 @@ export const EmptyContainersReport = () => {
             dataType='date'
             hidingPriority={24}
             width={100}
+            visible={false}
+            cellRender={(cell) => cellDateRender(cell, 'JobDate')}
           />
           <Column
             dataField='ReferenceNo'
             caption='XONO'
             dataType='string'
             width={100}
+            visible={false}
             hidingPriority={23}
           />
           <Column
@@ -336,93 +341,107 @@ export const EmptyContainersReport = () => {
             dataField='StatusType'
             caption='Status Type'
             width={100}
+            visible={false}
             hidingPriority={20}
           />
           <Column
             dataField='TejrimDate'
             caption='Tejrim Date'
             dataType='date'
-            width={100}
+            width={150}
             hidingPriority={19}
-          />
-          <Column
-            dataField='TotalProfit'
-            caption='Total Profit'
-            dataType='number'
-            hidingPriority={18}
-            cellRender={cellProfitRender}
-            format='currency'
-          />
-          <Column
-            dataField='Mbol'
-            caption='MBL'
-            hidingPriority={17}
           />
           <Column
             dataField='dtCntrToCnee'
             caption='Cntr To Cnee'
             dataType='date'
-            hidingPriority={16}
-          />
-          <Column
-            dataField='ContainerNo'
-            caption='Container#'
-            hidingPriority={15}
-          />
-          <Column
-            dataField='CarrierName'
-            caption='Carrier Name'
-            hidingPriority={14}
-          />
-          <Column
-            dataField='UserName'
-            caption='User Name'
-            hidingPriority={13}
-          />
-          <Column
-            dataField='Notes'
-            caption='Notes'
-            hidingPriority={12}
+            hidingPriority={18}
+            cellRender={(cell) => cellDateRender(cell, 'dtCntrToCnee')}
           />
           <Column
             dataField='ArrivalDays'
             caption='Arrival Days'
-            hidingPriority={11}
+            hidingPriority={17}
           />
           <Column
             dataField='TejrimDays'
             caption='Tejrim Days'
-            hidingPriority={10}
+            hidingPriority={16}
           />
+          <Column
+            dataField='DiffCntrToCnee'
+            caption='Cntr to Cnee'
+            hidingPriority={15}
+          />
+          <Column
+            dataField='TotalProfit'
+            caption='Total Profit'
+            dataType='number'
+            hidingPriority={14}
+            cellRender={cellProfitRender}
+            format='currency'
+          />
+          <Column
+            dataField='ContainerNo'
+            caption='Container#'
+            hidingPriority={13}
+          />
+          <Column
+            dataField='CarrierName'
+            caption='Carrier Name'
+            hidingPriority={12}
+          />
+          <Column
+            dataField='UserName'
+            caption='User Name'
+            hidingPriority={11}
+          />
+          <Column
+            dataField='Notes'
+            caption='Notes'
+            visible={false}
+            hidingPriority={101}
+          />
+
           <Column
             dataField='FullPaid'
             caption='Full Paid'
             hidingPriority={9}
           />
           <Column
-            dataField='DiffCntrToCnee'
-            caption='Cntr to Cnee'
-            hidingPriority={8}
-          />
-          <Column
             dataField='Departure'
             caption='Departure'
-            hidingPriority={7}
+            hidingPriority={8}
           />
           <Column
             dataField='Destination'
             caption='Destination'
-            hidingPriority={6}
+            hidingPriority={7}
           />
           <Column
             dataField='FullPaid'
             caption='FullPaid'
-            hidingPriority={5}
+            hidingPriority={6}
           />
           <Column
             dataField='PaidDO'
             caption='Paid D/O'
+            hidingPriority={5}
+          />
+          <Column
+            dataField='Mbol'
+            caption='MBL'
+            visible={false}
             hidingPriority={4}
+          />
+          <Column
+            dataField='DepartmentName'
+            caption='Department'
+            hidingPriority={3}
+            visible={false}
+            groupIndex={0}
+            sortOrder='desc'
+            sortIndex={0}
           />
           <Summary>
             <GroupItem
