@@ -488,6 +488,7 @@ export const JobStatusReport = () => {
             dataType='date'
             hidingPriority={17}
             width={100}
+            cellRender={(cell) => cellDateRender(cell, 'JobDate')}
           />
           <Column
             dataField='ReferenceNo'
@@ -510,6 +511,7 @@ export const JobStatusReport = () => {
             dataType='date'
             width={100}
             hidingPriority={14}
+            cellRender={(cell) => cellDateRender(cell, 'Eta')}
           />
           <Column
             dataField='Ata'
@@ -517,6 +519,7 @@ export const JobStatusReport = () => {
             dataType='date'
             width={100}
             hidingPriority={13}
+            cellRender={(cell) => cellDateRender(cell, 'Ata')}
           />
           <Column
             dataField='StatusType'
@@ -537,6 +540,7 @@ export const JobStatusReport = () => {
             caption='Payment Date'
             dataType='date'
             hidingPriority={10}
+            cellRender={(cell) => cellDateRender(cell, 'PaymentDate')}
           />
           <Column
             dataField='DepartmentName'
