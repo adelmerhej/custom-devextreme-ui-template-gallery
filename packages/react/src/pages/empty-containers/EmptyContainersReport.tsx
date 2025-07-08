@@ -355,22 +355,26 @@ export const EmptyContainersReport = () => {
             dataField='dtCntrToCnee'
             caption='Cntr To Cnee'
             dataType='date'
+            width={100}
             hidingPriority={18}
             cellRender={(cell) => cellDateRender(cell, 'dtCntrToCnee')}
           />
           <Column
             dataField='ArrivalDays'
             caption='Arrival Days'
+            width={100}
             hidingPriority={17}
           />
           <Column
             dataField='TejrimDays'
             caption='Tejrim Days'
+            width={100}
             hidingPriority={16}
           />
           <Column
             dataField='DiffCntrToCnee'
             caption='Cntr to Cnee'
+            width={100}
             hidingPriority={15}
           />
           <Column
