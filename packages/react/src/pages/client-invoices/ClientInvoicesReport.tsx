@@ -44,8 +44,8 @@ const filterStatusList = ['All', ...JOB_STATUS];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
-    <div>{cell.data.CustomerName}</div>
-    <div className='position'>{cell.data.ConsigneeName}</div>
+    <div>{cell.data.Customer}</div>
+    <div className='position'>{cell.data.Consignee}</div>
   </div>
 );
 
@@ -210,7 +210,7 @@ export const ClientInvoicesReport = () => {
 
   const onSaveClick = useCallback(() => {
     notify({
-      message: `New record "${newContactData.JobNo} - ${newContactData.CustomerName}" saved`,
+      message: `New record "${newContactData.JobNo} - ${newContactData.Customer}" saved`,
       position: { at: 'bottom center', my: 'bottom center' }
     },
     'success'
@@ -317,103 +317,114 @@ export const ClientInvoicesReport = () => {
             alignment='left'
             sortOrder='asc'
             width={100}
-            hidingPriority={20}
           />
           <Column
-            dataField='ReferenceNo'
-            caption='Reference#'
-            hidingPriority={19}
+            dataField='QuotationNo'
+            caption='XONO'
             width={150}
           />
           <Column
-            dataField='DepartmentName'
-            caption='Department'
-            hidingPriority={18}
-            width={150}
+            dataField='InvoiceNo'
+            caption='Invoice#'
+            width={100}
           />
           <Column
-            dataField='CustomerName'
-            caption='Customer'
-            hidingPriority={17}
-            dataType='string'
-            width={250}
-            cellRender={cellNameRender}
-          />
-          <Column
-            dataField='Status'
-            caption='Status'
-            width={150}
-            hidingPriority={16}
-          />
-          <Column
-            dataField='TotalInvoiceAmount'
-            caption='Total Invoices'
-            hidingPriority={15}
-            dataType='number'
-            cellRender={cellProfitRender}
-            format='currency'
-          />
-          <Column
-            dataField='TotalProfit'
-            caption='Total Profit'
-            dataType='number'
-            hidingPriority={14}
-            cellRender={cellProfitRender}
-            format='currency'
-          />
-          <Column
-            dataField='Mbol'
-            caption='MBL'
-            hidingPriority={13}
+            dataField='DueDate'
+            caption='Due Date'
+            dataType='date'
+            width={100}
           />
           <Column
             dataField='POL'
             caption='POL'
-            hidingPriority={12}
+            width={100}
           />
           <Column
             dataField='POD'
             caption='POD#'
-            hidingPriority={11}
+            width={100}
           />
           <Column
-            dataField='Volume'
-            caption='Volume'
-            hidingPriority={10}
-          />
-          <Column
-            dataField='Consignee'
-            caption='Consignee'
-            hidingPriority={9}
+            dataField='Customer'
+            caption='Customer'
+            dataType='string'
+            width={150}
+            cellRender={cellNameRender}
           />
           <Column
             dataField='Etd'
             caption='ETD'
             dataType='date'
-            hidingPriority={8}
+            width={100}
           />
           <Column
             dataField='Eta'
             caption='ETA'
             dataType='date'
-            hidingPriority={7}
+            width={100}
           />
           <Column
             dataField='Atd'
             caption='ATD'
             dataType='date'
-            hidingPriority={6}
+            width={100}
           />
           <Column
             dataField='Ata'
             caption='ATA'
             dataType='date'
-            hidingPriority={5}
+            width={100}
           />
           <Column
             dataField='StatusType'
             caption='Status Type'
-            hidingPriority={4}
+          />
+          <Column
+            dataField='TotalInvoiceAmount'
+            caption='Total Invoices'
+            dataType='number'
+            cellRender={cellProfitRender}
+            format='currency'
+            width={150}
+          />
+          <Column
+            dataField='TotalProfit'
+            caption='Total Profit'
+            dataType='number'
+            cellRender={cellProfitRender}
+            format='currency'
+            width={100}
+            visible={false}
+          />
+          <Column
+            dataField='DepartmentName'
+            caption='Department'
+            width={100}
+            visible={false}
+          />
+          <Column
+            dataField='Mbol'
+            caption='MBL'
+            width={100}
+            visible={false}
+          />
+          <Column
+            dataField='Volume'
+            caption='Volume'
+            width={100}
+            visible={false}
+          />
+          <Column
+            dataField='Consignee'
+            caption='Consignee'
+            width={100}
+            visible={false}
+          />
+          <Column
+            dataField='Status'
+            caption='Status'
+            width={150}
+            visible={false}
           />
           <Summary>
             <GroupItem

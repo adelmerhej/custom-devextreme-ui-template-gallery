@@ -480,13 +480,11 @@ export const JobStatusReport = () => {
             alignment='left'
             sortOrder='asc'
             width={100}
-            hidingPriority={18}
           />
           <Column
             dataField='JobDate'
             caption='Job Date'
             dataType='date'
-            hidingPriority={17}
             width={100}
             cellRender={(cell) => cellDateRender(cell, 'JobDate')}
           />
@@ -495,12 +493,10 @@ export const JobStatusReport = () => {
             caption='XONO'
             dataType='string'
             width={100}
-            hidingPriority={16}
           />
           <Column
             dataField='CustomerName'
             caption='Customer'
-            hidingPriority={15}
             dataType='string'
             width={250}
             cellRender={cellNameRender}
@@ -510,7 +506,6 @@ export const JobStatusReport = () => {
             caption='ETA'
             dataType='date'
             width={100}
-            hidingPriority={14}
             cellRender={(cell) => cellDateRender(cell, 'Eta')}
           />
           <Column
@@ -518,74 +513,70 @@ export const JobStatusReport = () => {
             caption='ATA'
             dataType='date'
             width={100}
-            hidingPriority={13}
             cellRender={(cell) => cellDateRender(cell, 'Ata')}
           />
           <Column
             dataField='StatusType'
             caption='Status Type'
             width={100}
-            hidingPriority={12}
-          />
-          <Column
-            dataField='TotalProfit'
-            caption='Total Profit'
-            dataType='number'
-            hidingPriority={11}
-            cellRender={cellProfitRender}
-            format='currency'
           />
           <Column
             dataField='PaymentDate'
             caption='Payment Date'
             dataType='date'
-            hidingPriority={10}
             cellRender={(cell) => cellDateRender(cell, 'PaymentDate')}
+          />
+          <Column
+            dataField='TotalProfit'
+            caption='Total Profit'
+            dataType='number'
+            cellRender={cellProfitRender}
+            format='currency'
           />
           <Column
             dataField='DepartmentName'
             caption='Department Name'
-            hidingPriority={9}
+            visible={false}
           />
           <Column
             dataField='Arrival'
             caption='Arrival'
-            hidingPriority={8}
+            visible={false}
           />
           <Column
             dataField='MemberOf'
             caption='Member Of'
-            hidingPriority={7}
+            visible={false}
           />
           <Column
             dataField='OperatingUserId'
             caption='Operating User'
-            hidingPriority={6}
+            visible={false}
           />
           <Column
             dataField='Tejrim'
             caption='Tejrim'
-            hidingPriority={5}
+            visible={false}
           />
           <Column
             dataField='CanceledJob'
             caption='Canceled Job'
-            hidingPriority={4}
+            visible={false}
           />
           <Column
             dataField='PendingCosts'
             caption='Pending Costs'
-            hidingPriority={3}
+            visible={false}
           />
           <Column
             dataField='FullPaid'
             caption='Full Paid'
-            hidingPriority={2}
+            visible={false}
           />
           <Column
             dataField='Status'
             caption='Status'
-            hidingPriority={1}
+            visible={false}
           />
 
           <Summary>

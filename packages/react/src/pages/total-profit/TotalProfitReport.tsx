@@ -375,58 +375,58 @@ export const TotalProfitReport = () => {
             caption='Job#'
             dataType='string'
             sortOrder='asc'
-            hidingPriority={5}
+            width={150}
           />
           <Column
             dataField='JobDate'
             caption='Job Date'
             dataType='date'
-            hidingPriority={5}
-            minWidth={150}
+            width={150}
           />
           <Column
             dataField='CustomerName'
             caption='Customer'
-            hidingPriority={5}
             dataType='string'
-            minWidth={150}
+            width={250}
             cellRender={cellNameRender}
           />
           <Column
             dataField='Eta'
             caption='ETA'
             dataType='date'
-            hidingPriority={3}
+            width={100}
           />
           <Column
             dataField='Ata'
             caption='ATA'
             dataType='date'
-            hidingPriority={3}
+            width={100}
           />
           <Column
-            dataField='Arrival'
-            caption='Arrival'
-            dataType='date'
-            hidingPriority={3}
+            dataField='StatusType'
+            caption='Status Type'
+            width={150}
           />
           <Column
             dataField='TotalProfit'
             caption='Total Profit'
             dataType='number'
-            hidingPriority={5}
             cellRender={cellProfitRender}
             format='currency'
+            width={100}
           />
           <Column
-            dataField='StatusType'
-            caption='Status Type'
-            hidingPriority={1}
+            dataField='Arrival'
+            caption='Arrival'
+            dataType='date'
+            visible={false}
+            width={100}
           />
           <Column
             dataField='DepartmentName'
             caption='Department Name'
-            hidingPriority={1}
+            width={150}
+            visible={false}
           />
           <Summary>
             <GroupItem
