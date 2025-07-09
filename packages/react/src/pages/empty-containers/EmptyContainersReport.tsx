@@ -116,7 +116,7 @@ export const EmptyContainersReport = () => {
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
   const gridRef = useRef<DataGridRef>(null);
-  const [totalProfit, setTotalProfit] = useState<number>(0);
+  const [sumOftotalProfit, setSumOfTotalProfit] = useState<number>(0);
 
   let newContactData: IEmptyContainer;
 
@@ -129,13 +129,25 @@ export const EmptyContainersReport = () => {
   }, []);
 
   // Helper function to load data with current parameters
-  const loadEmptyContainersData = useCallback(() => {
-    return fetchEmptyContainers({
-      page: 1,
-      limit: 100,
-      // status: 'Active', // Optional: filter by status
-      // TotalProfit: 0, // Optional: minimum profit filter
-    });
+  const loadEmptyContainersData = useCallback(async() => {
+    try {
+      const response = await fetchEmptyContainers({
+        page: 1,
+        limit: 100,
+      });
+
+      // If response has totalProfit, use it directly
+      if (response && typeof response === 'object' && 'totalProfit' in response) {
+        console.log('Setting total profit from API:', response.totalProfit);
+        setSumOfTotalProfit(response.totalProfit || 0);
+        return response.data || response;
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error loading empty containers data:', error);
+      return [];
+    }
   }, [getAuthToken]);
 
   useEffect(() => {
@@ -144,24 +156,6 @@ export const EmptyContainersReport = () => {
       load: loadEmptyContainersData,
     }));
   }, [loadEmptyContainersData]);
-
-  // Calculate total profit when grid data changes
-  useEffect(() => {
-    if (gridDataSource) {
-      gridDataSource.load().then((data: IEmptyContainer[]) => {
-        const total = data.reduce((sum, item) => {
-          const profit = item.TotalProfit || 0;
-          return sum + profit;
-        }, 0);
-        console.log('Total Profit:', total);
-        console.log('Sample data items:', data.slice(0, 3).map(item => ({
-          JobNo: item.JobNo,
-          TotalProfit: item.TotalProfit
-        })));
-        setTotalProfit(total);
-      });
-    }
-  }, [gridDataSource]);
 
   const syncDataOnClick = useCallback(() => {
     //setPopupVisible(true);
@@ -270,7 +264,7 @@ export const EmptyContainersReport = () => {
               <div className='grid-header'>Empty Container Report</div>
             </Item>
             <Item location='after'>
-              <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
+              <div className='total-profit-display'>Total Profit: ${formatCurrency(sumOftotalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
@@ -439,6 +433,7 @@ export const EmptyContainersReport = () => {
             caption='Payment Status'
             dataType='boolean'
             width={120}
+            visible={false}
             cellRender={cellFullPaidRender}
           />
           <Column
