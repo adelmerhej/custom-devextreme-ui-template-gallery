@@ -152,19 +152,6 @@ export const EmptyContainersReport = () => {
     }
   }, [gridDataSource]);
 
-  const changePopupVisibility = useCallback((isVisble) => {
-    setPopupVisible(isVisble);
-  }, []);
-
-  const changePanelOpened = useCallback(() => {
-    setPanelOpened(!isPanelOpened);
-    gridRef.current?.instance().option('focusedRowIndex', -1);
-  }, [isPanelOpened]);
-
-  const changePanelPinned = useCallback(() => {
-    gridRef.current?.instance().updateDimensions();
-  }, []);
-
   const syncDataOnClick = useCallback(() => {
     //setPopupVisible(true);
     setFormDataDefaults({ ...newJob });
@@ -181,6 +168,18 @@ export const EmptyContainersReport = () => {
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
     setContactId(data._id);
     setPanelOpened(true);
+  }, []);
+
+  // Highlight rows based on specific conditions
+  const onRowPrepared = useCallback((e: DataGridTypes.RowPreparedEvent) => {
+    if (e.rowType === 'data') {
+      const { ArrivalDays, TejrimDays, DiffCntrToCnee } = e.data;
+
+      // Check if ArrivalDays > 0 and TejrimDays = 0 and DiffCntrToCnee = 0
+      if (ArrivalDays > 0 && TejrimDays === 0 && DiffCntrToCnee === 0) {
+        e.rowElement.style.backgroundColor = '#E3F2FD';
+      }
+    }
   }, []);
 
   const [status, setStatus] = useState(filterDepartmentList[0]);
@@ -226,6 +225,7 @@ export const EmptyContainersReport = () => {
           height='100%'
           dataSource={gridDataSource}
           onRowClick={onRowClick}
+          onRowPrepared={onRowPrepared}
           onExporting={onExporting}
           allowColumnReordering
           showBorders
@@ -449,10 +449,7 @@ export const EmptyContainersReport = () => {
           </Summary>
           <SortByGroupSummaryInfo summaryItem='count' />
         </DataGrid>
-        <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
-        <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>
-          {/* <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} /> */}
-        </FormPopup>
+        {/* <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} /> */}
       </div>
     </div>
   );
