@@ -69,6 +69,21 @@ const cellFullPaidRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
   );
 };
 
+const cellMissingDocumentsRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
+  const isMissed = cell.data.MissingDocuments;
+
+  return (
+    <input
+      type='checkbox'
+
+      checked={isMissed}
+      style={{
+        accentColor: isMissed ? '#F44336' : '#4CAF50',
+      }}
+    />
+  );
+};
+
 const onExporting = (e: DataGridTypes.ExportingEvent) => {
   if (e.format === 'pdf') {
     const doc = new JsPdf();
@@ -384,6 +399,8 @@ export const EmptyContainersReport = () => {
             caption='Missing Documents'
             width={100}
             visible={false}
+            //cellMissingDocumentsRender
+            cellRender={cellMissingDocumentsRender}
           />
           <Column
             dataField='TotalProfit'
