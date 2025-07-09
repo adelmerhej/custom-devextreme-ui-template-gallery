@@ -202,17 +202,17 @@ export const EmptyContainersReport = () => {
     }
   }, []);
 
-  const [status, setStatus] = useState(filterDepartmentList[0]);
+  const [departement, setDepartement] = useState(filterDepartmentList[0]);
 
   const filterByDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: status }: { item: FilterByDepartment } = e;
-    if (status === 'All') {
+    const { item: departement }: { item: FilterByDepartment } = e;
+    if (departement === 'All') {
       gridRef.current?.instance().clearFilter();
     } else {
-      gridRef.current?.instance().filter(['StatusType', '=', status]);
+      gridRef.current?.instance().filter(['DepartmentName', '=', departement]);
     }
 
-    setStatus(status);
+    setDepartement(departement);
   }, []);
 
   const refresh = useCallback(() => {
@@ -285,7 +285,7 @@ export const EmptyContainersReport = () => {
               <DropDownButton
                 items={filterDepartmentList}
                 stylingMode='text'
-                text={status}
+                text={departement}
                 dropDownOptions={dropDownOptions}
                 useSelectMode
                 onSelectionChanged={filterByDepartment}
@@ -480,7 +480,11 @@ export const EmptyContainersReport = () => {
             <GroupItem
               column='TotalProfit'
               summaryType='sum'
-              displayFormat='Total: $ {0}'
+              customizeText={(data) => {
+                const value = typeof data.value === 'number' ? data.value : 0;
+                const formattedValue = formatCurrency(value);
+                return `Total: $ ${formattedValue}`;
+              }}
               showInGroupFooter
             />
           </Summary>
