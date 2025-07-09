@@ -30,6 +30,7 @@ export interface IEmptyContainer extends Document {
   TotalCosts?: number;
   TotalProfit?: number;
   DepartmentId: string;
+  MissingDocuments: string;
   MemberOf: string;
   JobType: string;
   createdAt: Date;

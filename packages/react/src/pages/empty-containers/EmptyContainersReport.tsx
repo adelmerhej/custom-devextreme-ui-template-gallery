@@ -20,8 +20,6 @@ import {
   SortByGroupSummaryInfo
 } from 'devextreme-react/data-grid';
 
-import SelectBox from 'devextreme-react/select-box';
-import TextBox from 'devextreme-react/text-box';
 import Button from 'devextreme-react/button';
 import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-button';
 
@@ -30,8 +28,6 @@ import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporte
 
 import { JobStatusPayment as JobStatusPaymentType,
   IEmptyContainer, JobStatus, StatusList, JobStatusDepartments } from '@/types/emptyContainer';
-
-import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
 
 import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
@@ -56,6 +52,21 @@ const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
 const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: string) => {
   const date = cell.data[field];
   return date ? new Date(date).toLocaleDateString() : '';
+};
+
+const cellFullPaidRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
+  const isPaid = cell.data.FullPaid;
+  return (
+    <span
+      style={{
+        fontWeight: 'bold',
+        color: isPaid ? '#4CAF50' : '#F44336',
+        fontSize: '14px'
+      }}
+    >
+      {isPaid ? 'PAID' : 'NOT PAID'}
+    </span>
+  );
 };
 
 const onExporting = (e: DataGridTypes.ExportingEvent) => {
@@ -375,6 +386,12 @@ export const EmptyContainersReport = () => {
             width={100}
           />
           <Column
+            dataField='MissingDocuments'
+            caption='Missing Documents'
+            width={100}
+            visible={false}
+          />
+          <Column
             dataField='TotalProfit'
             caption='Total Profit'
             dataType='number'
@@ -384,37 +401,45 @@ export const EmptyContainersReport = () => {
           <Column
             dataField='ContainerNo'
             caption='Container#'
+            width={100}
             visible={false}
           />
           <Column
             dataField='CarrierName'
             caption='Carrier Name'
+            width={100}
             visible={false}
           />
           <Column
             dataField='UserName'
             caption='User Name'
+            width={100}
             visible={false}
           />
           <Column
             dataField='Notes'
             caption='Notes'
+            width={100}
             visible={false}
           />
           <Column
             dataField='Departure'
             caption='Departure'
+            width={100}
             visible={false}
           />
           <Column
             dataField='Destination'
             caption='Destination'
+            width={100}
             visible={false}
           />
           <Column
             dataField='FullPaid'
-            caption='FullPaid'
-            visible={false}
+            caption='Payment Status'
+            dataType='boolean'
+            width={120}
+            cellRender={cellFullPaidRender}
           />
           <Column
             dataField='PaidDO'
