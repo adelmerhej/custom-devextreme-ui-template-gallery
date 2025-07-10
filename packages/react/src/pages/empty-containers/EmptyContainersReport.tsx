@@ -440,6 +440,7 @@ export const EmptyContainersReport = () => {
             dataField='TejrimDate'
             caption='Tejrim Date'
             dataType='date'
+            cellRender={(cell) => cellDateRender(cell, 'TejrimDate')}
             width={150}
           />
           <Column
@@ -522,6 +523,14 @@ export const EmptyContainersReport = () => {
             width={120}
             visible={false}
             cellRender={cellFullPaidRender}
+          />
+          <Column
+            dataField='PaymentDate'
+            caption='Payment Date'
+            dataType='date'
+            visible={false}
+            width={150}
+            cellRender={(cell) => cellDateRender(cell, 'PaymentDate')}
           />
           <Column
             dataField='PaidDO'
