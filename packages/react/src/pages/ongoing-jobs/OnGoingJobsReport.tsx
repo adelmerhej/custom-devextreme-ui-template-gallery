@@ -3,10 +3,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
 import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
+//import FilterBuilder, { type FilterBuilderTypes } from 'devextreme-react/filter-builder';
 
 // Importing data fetching function
 import { fetchOngoingJobs } from '../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
-
 // Import auth context for token access
 import { useAuth } from '../../contexts/auth';
 
@@ -29,9 +29,6 @@ import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporte
 import { JobStatusPayment as JobStatusPaymentType,
   IOngoingJob, JobStatus, StatusList, JobStatusDepartments } from '@/types/ongoingJob';
 
-import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
-import { ContactStatus } from '../../components';
-
 import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
@@ -53,10 +50,6 @@ const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   </div>
 );
 
-const editCellStatusRender = () => (
-  <SelectBox className='cell-info' dataSource={JOB_STATUS} itemRender={ContactStatus} fieldRender={fieldRender} />
-);
-
 const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <span>${cell.data.TotalProfit?.toFixed(2) || '0.00'}</span>
 );
@@ -65,13 +58,6 @@ const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: strin
   const date = cell.data[field];
   return date ? new Date(date).toLocaleDateString() : '';
 };
-
-const fieldRender = (text: string) => (
-  <>
-    <ContactStatus text={text} />
-    <TextBox readOnly />
-  </>
-);
 
 const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: number[], specialCondition?: { id: number, jobType: number } } => {
   switch (department) {
@@ -164,7 +150,7 @@ export const OngoingJobsReport = () => {
   let newContactData: IOngoingJob;
 
   // Helper function to load data with current parameters
-  const loadJobStatusesData = useCallback(() => {
+  const loadOngoingJobsData = useCallback(() => {
     const params: {
       page: number;
       limit: number;
@@ -216,9 +202,9 @@ export const OngoingJobsReport = () => {
   useEffect(() => {
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadJobStatusesData,
+      load: loadOngoingJobsData,
     }));
-  }, [loadJobStatusesData]);
+  }, [loadOngoingJobsData]);
 
   // Calculate total profit when grid data changes
   useEffect(() => {
@@ -250,11 +236,11 @@ export const OngoingJobsReport = () => {
     // Refresh data with current parameters
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadJobStatusesData,
+      load: loadOngoingJobsData,
     }));
 
     gridRef.current?.instance().refresh();
-  }, [loadJobStatusesData]);
+  }, [loadOngoingJobsData]);
 
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
     setContactId(data._id);
@@ -275,9 +261,9 @@ export const OngoingJobsReport = () => {
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadJobStatusesData,
+      load: loadOngoingJobsData,
     }));
-  }, [loadJobStatusesData]);
+  }, [loadOngoingJobsData]);
 
   const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
@@ -293,9 +279,9 @@ export const OngoingJobsReport = () => {
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadJobStatusesData,
+      load: loadOngoingJobsData,
     }));
-  }, [loadJobStatusesData]);
+  }, [loadOngoingJobsData]);
 
   const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: statusList }: { item: FilterStatusListType } = e;
@@ -311,9 +297,9 @@ export const OngoingJobsReport = () => {
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadJobStatusesData,
+      load: loadOngoingJobsData,
     }));
-  }, [loadJobStatusesData]);
+  }, [loadOngoingJobsData]);
 
   const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
@@ -329,9 +315,9 @@ export const OngoingJobsReport = () => {
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadJobStatusesData,
+      load: loadOngoingJobsData,
     }));
-  }, [loadJobStatusesData]);
+  }, [loadOngoingJobsData]);
 
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
@@ -393,7 +379,7 @@ export const OngoingJobsReport = () => {
           <Scrolling mode='virtual' />
           <Toolbar>
             <Item location='before'>
-              <div className='grid-header'>Job Status Report</div>
+              <div className='grid-header'>Ongoing Jobs Report</div>
             </Item>
             <Item location='after'>
               <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
@@ -477,26 +463,23 @@ export const OngoingJobsReport = () => {
             alignment='left'
             sortOrder='asc'
             width={100}
-            hidingPriority={18}
           />
           <Column
             dataField='JobDate'
             caption='Job Date'
             dataType='date'
-            hidingPriority={17}
             width={100}
+            cellRender={(cell) => cellDateRender(cell, 'JobDate')}
           />
           <Column
             dataField='ReferenceNo'
             caption='XONO'
             dataType='string'
             width={100}
-            hidingPriority={16}
           />
           <Column
             dataField='CustomerName'
             caption='Customer'
-            hidingPriority={15}
             dataType='string'
             width={250}
             cellRender={cellNameRender}
@@ -506,79 +489,77 @@ export const OngoingJobsReport = () => {
             caption='ETA'
             dataType='date'
             width={100}
-            hidingPriority={14}
+            cellRender={(cell) => cellDateRender(cell, 'Eta')}
           />
           <Column
             dataField='Ata'
             caption='ATA'
             dataType='date'
             width={100}
-            hidingPriority={13}
+            cellRender={(cell) => cellDateRender(cell, 'Ata')}
           />
           <Column
             dataField='StatusType'
             caption='Status Type'
             width={100}
-            hidingPriority={12}
-          />
-          <Column
-            dataField='TotalProfit'
-            caption='Total Profit'
-            dataType='number'
-            hidingPriority={11}
-            cellRender={cellProfitRender}
-            format='currency'
           />
           <Column
             dataField='PaymentDate'
             caption='Payment Date'
             dataType='date'
-            hidingPriority={10}
+            cellRender={(cell) => cellDateRender(cell, 'PaymentDate')}
+          />
+          <Column
+            dataField='TotalProfit'
+            caption='Total Profit'
+            dataType='number'
+            cellRender={cellProfitRender}
+            format='currency'
           />
           <Column
             dataField='DepartmentName'
             caption='Department Name'
-            hidingPriority={9}
+            visible={false}
           />
           <Column
             dataField='Arrival'
             caption='Arrival'
-            hidingPriority={8}
+            visible={false}
           />
           <Column
             dataField='MemberOf'
             caption='Member Of'
-            hidingPriority={7}
+            visible={false}
           />
           <Column
             dataField='OperatingUserId'
             caption='Operating User'
-            hidingPriority={6}
+            visible={false}
           />
           <Column
             dataField='Tejrim'
             caption='Tejrim'
-            hidingPriority={5}
+            visible={false}
           />
           <Column
             dataField='CanceledJob'
             caption='Canceled Job'
-            hidingPriority={4}
+            visible={false}
           />
           <Column
             dataField='PendingCosts'
             caption='Pending Costs'
-            hidingPriority={3}
+            visible={false}
           />
           <Column
             dataField='FullPaid'
             caption='Full Paid'
-            hidingPriority={2}
+            visible={false}
           />
           <Column
             dataField='Status'
             caption='Status'
-            hidingPriority={1}
+            visible={false}
           />
 
           <Summary>
@@ -597,10 +578,6 @@ export const OngoingJobsReport = () => {
           <SortByGroupSummaryInfo summaryItem='count' />
 
         </DataGrid>
-        <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
-        <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>
-          {/* <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} /> */}
-        </FormPopup>
       </div>
     </div>
   );

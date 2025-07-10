@@ -38,6 +38,10 @@ export async function fetchOngoingJobs(params: {
   limit?: number;
   status?: string;
   token?: string;
+  fullPaid?: string;
+  statusType?: string;
+  departmentId?: number;
+  jobType?: number;
 } = {}) {
   try {
     // Build query parameters
@@ -46,11 +50,15 @@ export async function fetchOngoingJobs(params: {
     if (params.page) queryParams.set('page', params.page.toString());
     if (params.limit) queryParams.set('limit', params.limit.toString());
     if (params.status) queryParams.set('status', params.status);
+    if (params.statusType) queryParams.set('statusType', params.statusType);
+    if (params.departmentId) queryParams.set('departmentId', params.departmentId.toString());
+    if (params.fullPaid) queryParams.set('fullPaid', params.fullPaid.toString());
+    if (params.jobType) queryParams.set('jobType', params.jobType.toString());
 
     // Get the query string
     const queryString = queryParams.toString();
 
-    // Use the getData function to fetch all ongoing jobs from MongoDB
+    // Use the getData function to fetch all Job Status from MongoDB
     const signInResult = await signIn('admin@xolog.com', 'Admin@Xolog#16');
     let token: string | undefined = undefined;
     if (signInResult && signInResult.isOk && signInResult.data && signInResult.data.token) {
