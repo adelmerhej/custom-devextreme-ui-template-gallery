@@ -26,6 +26,8 @@ export interface IEmptyContainer extends Document {
   Destination?: string;
   ReferenceNo?: string;
   vessel?: string;
+  FullPaid?: boolean;
+  PaymentDate?: Date;
   TotalInvoices?: number;
   TotalCosts?: number;
   TotalProfit?: number;
@@ -33,6 +35,7 @@ export interface IEmptyContainer extends Document {
   MissingDocuments: string;
   MemberOf: string;
   JobType: string;
+  PaidDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

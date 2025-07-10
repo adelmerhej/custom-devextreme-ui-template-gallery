@@ -26,7 +26,6 @@ const getData = async(queryString?: string, token?: string) => {
     }
 
     const data = await response.json();
-
     return data;
 
   } catch (error) { /* empty */ }
@@ -51,9 +50,9 @@ export async function fetchJobStatuses(params: {
     if (params.page) queryParams.set('page', params.page.toString());
     if (params.limit) queryParams.set('limit', params.limit.toString());
     if (params.status) queryParams.set('status', params.status);
-    if (params.fullPaid) queryParams.set('fullPaid', params.fullPaid.toString());
     if (params.statusType) queryParams.set('statusType', params.statusType);
     if (params.departmentId) queryParams.set('departmentId', params.departmentId.toString());
+    if (params.fullPaid) queryParams.set('fullPaid', params.fullPaid.toString());
     if (params.jobType) queryParams.set('jobType', params.jobType.toString());
 
     // Get the query string

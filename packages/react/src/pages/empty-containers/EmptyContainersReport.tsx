@@ -29,13 +29,40 @@ import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporte
 import { JobStatusPayment as JobStatusPaymentType,
   IEmptyContainer, JobStatus, StatusList, JobStatusDepartments } from '@/types/emptyContainer';
 
-import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, newJob } from '../../shared/constants';
+import { JOB_STATUS_DEPARTMENTS, JOB_STATUS_PAYMENT } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
-type FilterByDepartment = JobStatusDepartments | 'All';
+type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
+type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
 const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
+const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
+
+const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: number[], specialCondition?: { id: number, jobType: number } } => {
+  switch (department) {
+    case 'All':
+      return { ids: [0] };
+    case 'Air Export':
+      return { ids: [2] };
+    case 'Air Import':
+      return { ids: [5] };
+    case 'Land Freight':
+      return { ids: [6] };
+    case 'Air Clearance':
+      return { ids: [8] };
+    case 'Sea Import':
+      return { ids: [16] };
+    case 'Sea Clearance':
+      return { ids: [17] };
+    case 'Sea Export':
+      return { ids: [18] };
+    case 'Sea Cross':
+      return { ids: [16], specialCondition: { id: 16, jobType: 3 } };
+    default:
+      return { ids: [0] };
+  }
+};
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
@@ -129,9 +156,14 @@ export const EmptyContainersReport = () => {
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
-  const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
   const gridRef = useRef<DataGridRef>(null);
   const [sumOftotalProfit, setSumOfTotalProfit] = useState<number>(0);
+
+  const [departement, setDepartements] = useState(filterDepartmentList[0]);
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+
+  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
 
   let newContactData: IEmptyContainer;
 
@@ -145,25 +177,42 @@ export const EmptyContainersReport = () => {
 
   // Helper function to load data with current parameters
   const loadEmptyContainersData = useCallback(async() => {
-    try {
-      const response = await fetchEmptyContainers({
+
+    const params: {
+        page: number;
+        limit: number;
+        departmentId?: number;
+        fullPaid?: string;
+        jobType?: number;
+      } = {
         page: 1,
         limit: 100,
-      });
+      };
 
-      // If response has totalProfit, use it directly
-      if (response && typeof response === 'object' && 'totalProfit' in response) {
-        console.log('Setting total profit from API:', response.totalProfit);
-        setSumOfTotalProfit(response.totalProfit || 0);
-        return response.data || response;
+    // Add payment status filter if set
+    if (paymentStatusFilter) {
+      if (paymentStatusFilter === 'Full Paid') {
+        params.fullPaid = 'true';
+      } else if (paymentStatusFilter === 'Not Paid') {
+        params.fullPaid = 'false';
+      }else {
+        params.fullPaid = undefined;
       }
-
-      return response;
-    } catch (error) {
-      console.error('Error loading empty containers data:', error);
-      return [];
     }
-  }, [getAuthToken]);
+
+    // Add department filter if set
+    if (departmentFilter && departmentFilter !== 'All') {
+      const departmentResult = getDepartmentId(departmentFilter as FilterJobStatusDepartmentType);
+      if (departmentResult.ids[0] !== 0) {
+        params.departmentId = departmentResult.ids[0];
+        if (departmentResult.specialCondition) {
+          params.jobType = departmentResult.specialCondition.jobType;
+        }
+      }
+    }
+
+    return fetchEmptyContainers(params);
+  }, [paymentStatusFilter, departmentFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
@@ -174,7 +223,7 @@ export const EmptyContainersReport = () => {
 
   const syncDataOnClick = useCallback(() => {
     //setPopupVisible(true);
-    setFormDataDefaults({ ...newJob });
+    //setFormDataDefaults({ ...newJob });
 
     // Refresh data with current parameters
     setGridDataSource(new DataSource({
@@ -202,37 +251,48 @@ export const EmptyContainersReport = () => {
     }
   }, []);
 
-  const [departement, setDepartement] = useState(filterDepartmentList[0]);
+  const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
 
-  const filterByDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: departement }: { item: FilterByDepartment } = e;
     if (departement === 'All') {
-      gridRef.current?.instance().clearFilter();
+      setDepartmentFilter(null);
     } else {
-      gridRef.current?.instance().filter(['DepartmentName', '=', departement]);
+      setDepartmentFilter(departement);
     }
 
-    setDepartement(departement);
-  }, []);
+    setDepartements(departement);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadEmptyContainersData,
+    }));
+  }, [loadEmptyContainersData]);
 
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
   }, []);
 
+  const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
+
+    if (paymentStatus === 'All') {
+      setPaymentStatusFilter(null);
+    } else {
+      setPaymentStatusFilter(paymentStatus);
+    }
+
+    setPaymentStatus(paymentStatus);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadEmptyContainersData,
+    }));
+  }, [loadEmptyContainersData]);
+
   const onDataChanged = useCallback((data) => {
     newContactData = data;
-  }, []);
-
-  const onSaveClick = useCallback(() => {
-    notify({
-      message: `New record "${newContactData.JobNo} - ${newContactData.CustomerName}" saved`,
-      position: { at: 'bottom center', my: 'bottom center' }
-    },
-    'success'
-    );
-
-    setFormDataDefaults({ ...formDataDefaults });
-    setPopupVisible(false);
   }, []);
 
   return (
@@ -288,7 +348,17 @@ export const EmptyContainersReport = () => {
                 text={departement}
                 dropDownOptions={dropDownOptions}
                 useSelectMode
-                onSelectionChanged={filterByDepartment}
+                onSelectionChanged={filterByJobDepartment}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterPaymentList}
+                stylingMode='text'
+                text={paymentStatus}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobPaymentStatus}
               />
             </Item>
             <Item location='after' locateInMenu='auto'>

@@ -38,6 +38,9 @@ export async function fetchEmptyContainers(params: {
   limit?: number;
   status?: string;
   token?: string;
+  fullPaid?: string;
+  departmentId?: number;
+  jobType?: number;
 } = {}) {
   try {
     // Build query parameters
@@ -46,6 +49,9 @@ export async function fetchEmptyContainers(params: {
     if (params.page) queryParams.set('page', params.page.toString());
     if (params.limit) queryParams.set('limit', params.limit.toString());
     if (params.status) queryParams.set('status', params.status);
+    if (params.departmentId) queryParams.set('departmentId', params.departmentId.toString());
+    if (params.fullPaid) queryParams.set('fullPaid', params.fullPaid.toString());
+    if (params.jobType) queryParams.set('jobType', params.jobType.toString());
 
     // Get the query string
     const queryString = queryParams.toString();
@@ -58,6 +64,8 @@ export async function fetchEmptyContainers(params: {
     }
 
     params.token = token;
+
+    console.log('Fetching Empty Containers with params:', params);
 
     const data = await getData(queryString, params.token);
 

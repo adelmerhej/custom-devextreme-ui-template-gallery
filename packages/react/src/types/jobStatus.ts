@@ -26,14 +26,14 @@ export interface IJobStatus extends Document {
   Tejrim: string;
   CanceledJob: boolean;
   ConsigneeName: string;
-  PaymentDate?: Date;
   MemberOf: string;
   JobType: string;
   Atd?: Date;
   Etd?: Date;
   Ata?: Date;
   Eta?: Date;
-  FullPaid?: boolean; // Optional field for full paid status
+  FullPaid?: boolean;
+  PaymentDate?: Date;
   PaidDO?: boolean;
   PaidDate?: Date;
   MissingDocuments?: boolean;
