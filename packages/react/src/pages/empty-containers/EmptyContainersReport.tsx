@@ -525,12 +525,12 @@ export const EmptyContainersReport = () => {
             cellRender={cellFullPaidRender}
           />
           <Column
-            dataField='PaymentDate'
+            dataField='FullPaidDate'
             caption='Payment Date'
             dataType='date'
             visible={false}
             width={150}
-            cellRender={(cell) => cellDateRender(cell, 'PaymentDate')}
+            cellRender={(cell) => cellDateRender(cell, 'FullPaidDate')}
           />
           <Column
             dataField='PaidDO'
