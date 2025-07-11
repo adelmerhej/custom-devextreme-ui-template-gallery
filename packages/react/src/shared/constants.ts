@@ -41,6 +41,11 @@ export const JOB_STATUS_PAYMENT = [
   'Not Paid',
 ];
 
+export const INVOICE_PAYMENT = [
+  'Invoices',
+  'Drafts',
+];
+
 export const JOB_STATUS_LIST = [
   'New',
   'Delivered',

@@ -1,8 +1,9 @@
-import { JOB_STATUS, JOB_STATUS_LIST, JOB_STATUS_DEPARTMENTS, JOB_STATUS_PAYMENT } from '../shared/constants';
+import { JOB_STATUS, JOB_STATUS_LIST, JOB_STATUS_DEPARTMENTS, JOB_STATUS_PAYMENT, INVOICE_PAYMENT } from '../shared/constants';
 
 export type JobStatus = (typeof JOB_STATUS)[number];
 
 export type JobStatusPayment = (typeof JOB_STATUS_PAYMENT)[number];
+export type InvoicePayment = (typeof INVOICE_PAYMENT)[number];
 
 export type StatusList = (typeof JOB_STATUS_LIST)[number];
 

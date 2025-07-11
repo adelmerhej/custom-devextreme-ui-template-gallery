@@ -40,7 +40,7 @@ type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
 const filterJobStatusList = ['All', ...JOB_STATUS];
 const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
-const filterStatusList = ['All', ...JOB_STATUS_LIST];
+const filterStatusList = ['All', ...JOB_STATUS_LIST];``
 const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
@@ -131,11 +131,11 @@ export const OngoingJobsReport = () => {
   const [popupVisible, setPopupVisible] = useState(false);
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
 
-  const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
-  const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
-
   const [departement, setDepartements] = useState(filterDepartmentList[0]);
   const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+
+  const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
+  const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
 
   const [statusList, setStatusList] = useState('New');
   const [statusListFilter, setStatusListFilter] = useState<string>('New');
@@ -146,8 +146,6 @@ export const OngoingJobsReport = () => {
   const [totalProfit, setTotalProfit] = useState<number>(0);
 
   const gridRef = useRef<DataGridRef>(null);
-
-  let newContactData: IOngoingJob;
 
   // Helper function to load data with current parameters
   const loadOngoingJobsData = useCallback(() => {
@@ -321,22 +319,6 @@ export const OngoingJobsReport = () => {
 
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
-  }, []);
-
-  const onDataChanged = useCallback((data) => {
-    newContactData = data;
-  }, []);
-
-  const onSaveClick = useCallback(() => {
-    notify({
-      message: `New record "${newContactData.JobNo} - ${newContactData.CustomerName}" saved`,
-      position: { at: 'bottom center', my: 'bottom center' }
-    },
-    'success'
-    );
-
-    setFormDataDefaults({ ...formDataDefaults });
-    setPopupVisible(false);
   }, []);
 
   return (

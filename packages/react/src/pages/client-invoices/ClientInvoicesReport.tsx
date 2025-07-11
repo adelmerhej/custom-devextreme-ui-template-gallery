@@ -28,19 +28,27 @@ import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
-import { JobStatusPayment as JobStatusPaymentType,
-  IClientInvoice, JobStatus, StatusList, JobStatusDepartments } from '@/types/clientInvoice';
+import { IClientInvoice, JobStatus, InvoicePayment, JobStatusDepartments } from '@/types/clientInvoice';
 
-import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
+import { FormPopup, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
 
-import { JOB_STATUS, newJob } from '../../shared/constants';
+import { INVOICE_PAYMENT, JOB_STATUS, JOB_STATUS_DEPARTMENTS,
+  JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
+import { StatusList, JobStatusPayment as JobStatusPaymentType, } from '@/types/jobStatus';
 
-type FilterContactStatus = JobStatusPaymentType | 'All';
+type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
+type FilterJobStatusType = JobStatus | 'All';
+type InvoicePaymentType = InvoicePayment | 'All';
+type FilterStatusListType = StatusList | 'All';
+type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
-const filterStatusList = ['All', ...JOB_STATUS];
+const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
+const filterJobStatusList = ['All', ...JOB_STATUS];
+const filterInvoiceStatusList = ['All', ...INVOICE_PAYMENT];
+const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
@@ -69,6 +77,33 @@ const fieldRender = (text: string) => (
   </>
 );
 
+// Function to get department IDs based on the selected department
+// This function returns an object with ids and an optional special condition for Sea Cross
+const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: number[], specialCondition?: { id: number, jobType: number } } => {
+  switch (department) {
+    case 'All':
+      return { ids: [0] };
+    case 'Air Export':
+      return { ids: [2] };
+    case 'Air Import':
+      return { ids: [5] };
+    case 'Land Freight':
+      return { ids: [6] };
+    case 'Air Clearance':
+      return { ids: [8] };
+    case 'Sea Import':
+      return { ids: [16] };
+    case 'Sea Clearance':
+      return { ids: [17] };
+    case 'Sea Export':
+      return { ids: [18] };
+    case 'Sea Cross':
+      return { ids: [16], specialCondition: { id: 16, jobType: 3 } };
+    default:
+      return { ids: [0] };
+  }
+};
+
 const onExporting = (e: DataGridTypes.ExportingEvent) => {
   if (e.format === 'pdf') {
     const doc = new JsPdf();
@@ -76,11 +111,11 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       jsPDFDocument: doc,
       component: e.component,
     }).then(() => {
-      doc.save('EmptyContainer.pdf');
+      doc.save('ClientInvoices.pdf');
     });
   } else {
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('EmptyContainer');
+    const worksheet = workbook.addWorksheet('ClientInvoices');
 
     exportDataGridToXLSX({
       component: e.component,
@@ -88,7 +123,7 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'EmptyContainer.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'ClientInvoices.xlsx');
       });
     });
     e.cancel = true;
@@ -114,12 +149,21 @@ export const ClientInvoicesReport = () => {
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
-  const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
   const gridRef = useRef<DataGridRef>(null);
   const [totalProfit, setTotalProfit] = useState<number>(0);
   const [totalInvoice, setTotalInvoice] = useState<number>(0);
 
-  let newContactData: IClientInvoice;
+  const [departement, setDepartements] = useState(filterDepartmentList[0]);
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+
+  const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
+  const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
+
+  const [statusList, setStatusList] = useState('New');
+  const [statusListFilter, setStatusListFilter] = useState<string>('New');
+
+  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
 
   // Helper function to get auth token (placeholder for when auth system includes tokens)
   const getAuthToken = useCallback(() => {
@@ -131,11 +175,53 @@ export const ClientInvoicesReport = () => {
 
   // Helper function to load data with current parameters
   const loadClientInvoicesData = useCallback(() => {
-    return fetchClientInvoices({
+    const params: {
+      page: number;
+      limit: number;
+      jobStatusType?: string;
+      fullPaid?: string;
+      statusType?: string;
+      departmentId?: number;
+      jobType?: number;
+    } = {
       page: 1,
       limit: 100,
-    });
-  }, [getAuthToken]);
+    };
+
+    // Add payment status filter if set
+    if (paymentStatusFilter) {
+      if (paymentStatusFilter === 'Full Paid') {
+        params.fullPaid = 'true';
+      } else if (paymentStatusFilter === 'Not Paid') {
+        params.fullPaid = 'false';
+      }else {
+        params.fullPaid = undefined;
+      }
+    }
+
+    // Add status filter if set
+    if (jobStatusFilter && jobStatusFilter !== 'All') {
+      params.jobStatusType = jobStatusFilter;
+    }
+
+    // Add status list filter if set
+    if (statusListFilter && statusListFilter !== 'All') {
+      params.statusType = statusListFilter;
+    }
+
+    // Add department filter if set
+    if (departmentFilter && departmentFilter !== 'All') {
+      const departmentResult = getDepartmentId(departmentFilter as FilterJobStatusDepartmentType);
+      if (departmentResult.ids[0] !== 0) {
+        params.departmentId = departmentResult.ids[0];
+        if (departmentResult.specialCondition) {
+          params.jobType = departmentResult.specialCondition.jobType;
+        }
+      }
+    }
+
+    return fetchClientInvoices(params);
+  }, [paymentStatusFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
@@ -169,10 +255,65 @@ export const ClientInvoicesReport = () => {
     gridRef.current?.instance().updateDimensions();
   }, []);
 
-  const syncDataOnClick = useCallback(() => {
-    //setPopupVisible(true);
-    setFormDataDefaults({ ...newJob });
+  const refresh = useCallback(() => {
+    gridRef.current?.instance().refresh();
+  }, []);
 
+  const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
+
+    if (departement === 'All') {
+      setDepartmentFilter(null);
+    } else {
+      setDepartmentFilter(departement);
+    }
+
+    setDepartements(departement);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadClientInvoicesData,
+    }));
+  }, [loadClientInvoicesData]);
+
+  const filterByJobStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: jobStatus }: { item: FilterJobStatusType } = e;
+
+    setJobStatus(jobStatus);
+
+    if (jobStatus === 'All') {
+      setJobStatusFilter(null);
+    } else {
+      setJobStatusFilter(jobStatus);
+    }
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadClientInvoicesData,
+    }));
+  }, [loadClientInvoicesData]);
+
+  const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: statusList }: { item: FilterStatusListType } = e;
+
+    if (statusList === 'All') {
+      setStatusListFilter('All');
+    } else {
+      setStatusListFilter(statusList);
+    }
+
+    setStatusList(statusList);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadClientInvoicesData,
+    }));
+  }, [loadClientInvoicesData]);
+
+  const syncDataOnClick = useCallback(() => {
     // Refresh data with current parameters
     setGridDataSource(new DataSource({
       key: '_id',
@@ -187,38 +328,23 @@ export const ClientInvoicesReport = () => {
     setPanelOpened(true);
   }, []);
 
-  const [status, setStatus] = useState(filterStatusList[0]);
+  const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
 
-  const filterByStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: status }: { item: FilterContactStatus } = e;
-    if (status === 'All') {
-      gridRef.current?.instance().clearFilter();
+    if (paymentStatus === 'All') {
+      setPaymentStatusFilter(null);
     } else {
-      gridRef.current?.instance().filter(['StatusType', '=', status]);
+      setPaymentStatusFilter(paymentStatus);
     }
 
-    setStatus(status);
-  }, []);
+    setPaymentStatus(paymentStatus);
 
-  const refresh = useCallback(() => {
-    gridRef.current?.instance().refresh();
-  }, []);
-
-  const onDataChanged = useCallback((data) => {
-    newContactData = data;
-  }, []);
-
-  const onSaveClick = useCallback(() => {
-    notify({
-      message: `New record "${newContactData.JobNo} - ${newContactData.Customer}" saved`,
-      position: { at: 'bottom center', my: 'bottom center' }
-    },
-    'success'
-    );
-
-    setFormDataDefaults({ ...formDataDefaults });
-    setPopupVisible(false);
-  }, []);
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadClientInvoicesData,
+    }));
+  }, [loadClientInvoicesData]);
 
   return (
     <div className='view crm-contact-list'>
@@ -229,7 +355,6 @@ export const ClientInvoicesReport = () => {
           focusedRowEnabled
           height='100%'
           dataSource={gridDataSource}
-          onRowClick={onRowClick}
           onExporting={onExporting}
           allowColumnReordering
           showBorders
@@ -270,12 +395,42 @@ export const ClientInvoicesReport = () => {
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton
-                items={filterStatusList}
+                items={filterDepartmentList}
                 stylingMode='text'
-                text={status}
+                text={departement}
                 dropDownOptions={dropDownOptions}
                 useSelectMode
-                onSelectionChanged={filterByStatus}
+                onSelectionChanged={filterByJobDepartment}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterJobStatusList}
+                stylingMode='text'
+                text={jobStatus}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobStatus}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterInvoiceStatusList}
+                stylingMode='text'
+                text={statusList}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByStatusList}
+              />
+            </Item>
+            <Item location='before' locateInMenu='auto'>
+              <DropDownButton
+                items={filterPaymentList}
+                stylingMode='text'
+                text={paymentStatus}
+                dropDownOptions={dropDownOptions}
+                useSelectMode
+                onSelectionChanged={filterByJobPaymentStatus}
               />
             </Item>
             <Item location='after' locateInMenu='auto'>
@@ -442,9 +597,6 @@ export const ClientInvoicesReport = () => {
           <SortByGroupSummaryInfo summaryItem='count' />
         </DataGrid>
         <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
-        <FormPopup title='New Contact' visible={popupVisible} setVisible={changePopupVisibility} onSave={onSaveClick}>
-          {/* <ContactNewForm initData={ formDataDefaults } onDataChanged={onDataChanged} /> */}
-        </FormPopup>
       </div>
     </div>
   );
