@@ -157,7 +157,7 @@ export const EmptyContainersReport = () => {
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
   const gridRef = useRef<DataGridRef>(null);
-  const [sumOftotalProfit, setSumOfTotalProfit] = useState<number>(0);
+  const [totalProfit, setTotalProfit] = useState<number>(0);
 
   const [departement, setDepartements] = useState(filterDepartmentList[0]);
   const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
@@ -251,6 +251,16 @@ export const EmptyContainersReport = () => {
     }
   }, []);
 
+  // Calculate total profit when grid data changes
+  useEffect(() => {
+    if (gridDataSource) {
+      gridDataSource.load().then((data: IEmptyContainer[]) => {
+        const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+        setTotalProfit(total);
+      });
+    }
+  }, [gridDataSource]);
+
   const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
 
@@ -339,7 +349,7 @@ export const EmptyContainersReport = () => {
               <div className='grid-header'>Empty Container Report</div>
             </Item>
             <Item location='after'>
-              <div className='total-profit-display'>Total Profit: ${formatCurrency(sumOftotalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
+              <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton

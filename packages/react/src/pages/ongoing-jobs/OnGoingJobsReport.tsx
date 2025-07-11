@@ -154,7 +154,7 @@ export const OngoingJobsReport = () => {
     const params: {
       page: number;
       limit: number;
-      status?: string;
+      jobStatusType?: string;
       fullPaid?: string;
       statusType?: string;
       departmentId?: number;
@@ -177,7 +177,7 @@ export const OngoingJobsReport = () => {
 
     // Add status filter if set
     if (jobStatusFilter && jobStatusFilter !== 'All') {
-      params.status = jobStatusFilter;
+      params.jobStatusType = jobStatusFilter;
     }
 
     // Add status list filter if set

@@ -20,12 +20,16 @@ const getData = async(queryString?: string, token?: string) => {
       method: 'GET',
       headers: headers,
     });
+    console.log('Ongoing Jobs API URL:', `${baseUrl}/ongoing-jobs${queryString ? `?${queryString}` : ''}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch ongoing jobs');
     }
 
     const data = await response.json();
+
+    console.log('Ongoing Jobs Data:', data);
+
     return data;
 
   } catch (error) { /* empty */ }
@@ -36,7 +40,7 @@ const getData = async(queryString?: string, token?: string) => {
 export async function fetchOngoingJobs(params: {
   page?: number;
   limit?: number;
-  status?: string;
+  jobStatusType?: string;
   token?: string;
   fullPaid?: string;
   statusType?: string;
@@ -49,7 +53,7 @@ export async function fetchOngoingJobs(params: {
 
     if (params.page) queryParams.set('page', params.page.toString());
     if (params.limit) queryParams.set('limit', params.limit.toString());
-    if (params.status) queryParams.set('status', params.status);
+    if (params.jobStatusType) queryParams.set('jobStatusType', params.jobStatusType);
     if (params.statusType) queryParams.set('statusType', params.statusType);
     if (params.departmentId) queryParams.set('departmentId', params.departmentId.toString());
     if (params.fullPaid) queryParams.set('fullPaid', params.fullPaid.toString());
@@ -83,19 +87,19 @@ export async function fetchOngoingJobs(params: {
 export async function getOngoingJobsData(options: {
   page?: number;
   limit?: number;
-  status?: string;
+  jobStatusType?: string;
   token?: string;
 } = {}) {
   const defaultOptions = {
     page: 1,
-    limit: 50,
+    limit: 100,
     ...options
   };
 
   return fetchOngoingJobs({
     page: defaultOptions.page,
     limit: defaultOptions.limit,
-    status: defaultOptions.status,
+    jobStatusType: defaultOptions.jobStatusType,
     token: defaultOptions.token
   });
 }
