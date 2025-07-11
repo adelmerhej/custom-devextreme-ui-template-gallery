@@ -17,7 +17,8 @@ import {
   DataGridTypes, Paging, Pager, Grouping, GroupPanel,
   Summary,
   GroupItem,
-  SortByGroupSummaryInfo
+  SortByGroupSummaryInfo,
+  MasterDetail
 } from 'devextreme-react/data-grid';
 
 import SelectBox from 'devextreme-react/select-box';
@@ -38,6 +39,51 @@ import { INVOICE_PAYMENT, JOB_STATUS, JOB_STATUS_DEPARTMENTS,
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 import { StatusList, JobStatusPayment as JobStatusPaymentType, } from '@/types/jobStatus';
+
+// Interface for job master record
+interface IJobMaster {
+  _id: string;
+  JobNo: string;
+  JobDate?: Date;
+  Customer?: string;
+  Consignee?: string;
+  DepartmentName?: string;
+  StatusType?: string;
+  Eta?: Date;
+  Ata?: Date;
+  Etd?: Date;
+  Atd?: Date;
+  POL?: string;
+  POD?: string;
+  UserName?: string;
+  Notes?: string;
+  CountryOfDeparture?: string;
+  Departure?: string;
+  Destination?: string;
+  ReferenceNo?: string;
+  vessel?: string;
+  TotalInvoices?: number;
+  TotalCosts?: number;
+  TotalProfit?: number;
+  DepartmentId: string;
+  MemberOf: string;
+  JobType: string;
+  createdAt: Date;
+  updatedAt: Date;
+  invoiceDetails?: IInvoiceDetail[];
+}
+
+// Interface for invoice detail record
+interface IInvoiceDetail {
+  _id: string;
+  JobNo: string;
+  InvoiceNo?: string;
+  DueDate?: Date;
+  TotalInvoiceAmount?: number;
+  InvoiceProfit?: number;
+  InvoiceStatus?: string;
+  PaymentStatus?: string;
+}
 
 type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
 type FilterJobStatusType = JobStatus | 'All';
@@ -111,11 +157,11 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       jsPDFDocument: doc,
       component: e.component,
     }).then(() => {
-      doc.save('ClientInvoices.pdf');
+      doc.save('JobsInvoiceDetails.pdf');
     });
   } else {
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('ClientInvoices');
+    const worksheet = workbook.addWorksheet('JobsInvoiceDetails');
 
     exportDataGridToXLSX({
       component: e.component,
@@ -123,7 +169,7 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'ClientInvoices.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'JobsInvoiceDetails.xlsx');
       });
     });
     e.cancel = true;
@@ -141,11 +187,142 @@ const formatCurrency = (amount: number): string => {
   });
 };
 
+// Function to transform client invoice data to master-detail structure
+const transformToMasterDetail = (clientInvoices: IClientInvoice[]): IJobMaster[] => {
+  const jobMap = new Map<string, IJobMaster>();
+
+  clientInvoices.forEach(invoice => {
+    const jobKey = invoice.JobNo;
+
+    if (!jobMap.has(jobKey)) {
+      // Create master record for the job
+      jobMap.set(jobKey, {
+        _id: invoice._id,
+        JobNo: invoice.JobNo,
+        JobDate: invoice.JobDate,
+        Customer: invoice.Customer,
+        Consignee: invoice.Consignee,
+        DepartmentName: invoice.DepartmentName,
+        StatusType: invoice.StatusType,
+        Eta: invoice.Eta,
+        Ata: invoice.Ata,
+        Etd: invoice.Etd,
+        Atd: invoice.Atd,
+        POL: invoice.POL,
+        POD: invoice.POD,
+        UserName: invoice.UserName,
+        Notes: invoice.Notes,
+        CountryOfDeparture: invoice.CountryOfDeparture,
+        Departure: invoice.Departure,
+        Destination: invoice.Destination,
+        ReferenceNo: invoice.ReferenceNo,
+        vessel: invoice.vessel,
+        TotalInvoices: 0,
+        TotalCosts: 0,
+        TotalProfit: 0,
+        DepartmentId: invoice.DepartmentId,
+        MemberOf: invoice.MemberOf,
+        JobType: invoice.JobType,
+        createdAt: invoice.createdAt,
+        updatedAt: invoice.updatedAt,
+        invoiceDetails: []
+      });
+    }
+
+    const job = jobMap.get(jobKey);
+    if (!job) return;
+
+    // Add invoice detail
+    if (invoice.InvoiceNo) {
+      if (!job.invoiceDetails) {
+        job.invoiceDetails = [];
+      }
+      job.invoiceDetails.push({
+        _id: `${invoice._id}-inv`,
+        JobNo: invoice.JobNo,
+        InvoiceNo: invoice.InvoiceNo,
+        DueDate: invoice.DueDate,
+        TotalInvoiceAmount: invoice.TotalInvoiceAmount || invoice.TotalInvoices,
+        InvoiceProfit: invoice.TotalProfit,
+        InvoiceStatus: invoice.StatusType,
+        PaymentStatus: 'Pending' // This would come from your data
+      });
+    }
+
+    // Aggregate totals
+    job.TotalInvoices = (job.TotalInvoices || 0) + (invoice.TotalInvoices || 0);
+    job.TotalCosts = (job.TotalCosts || 0) + (invoice.TotalCosts || 0);
+    job.TotalProfit = (job.TotalProfit || 0) + (invoice.TotalProfit || 0);
+  });
+
+  return Array.from(jobMap.values());
+};
+
+// Detail template component for invoice details
+const InvoiceDetailTemplate = (props: { data: IJobMaster }) => {
+  const { data: masterData } = props;
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h4>Invoice Details for Job #{masterData.JobNo}</h4>
+      <DataGrid
+        dataSource={masterData.invoiceDetails || []}
+        showBorders
+        showRowLines
+        rowAlternationEnabled
+        height={300}
+      >
+        <Column
+          dataField='InvoiceNo'
+          caption='Invoice#'
+          width={120}
+        />
+        <Column
+          dataField='DueDate'
+          caption='Due Date'
+          dataType='date'
+          width={100}
+        />
+        <Column
+          dataField='TotalInvoiceAmount'
+          caption='Invoice Amount'
+          dataType='number'
+          format='currency'
+          width={130}
+          cellRender={(cell) => (
+            <span>${formatCurrency(cell.data.TotalInvoiceAmount || 0)}</span>
+          )}
+        />
+        <Column
+          dataField='InvoiceProfit'
+          caption='Profit'
+          dataType='number'
+          format='currency'
+          width={100}
+          cellRender={(cell) => (
+            <span>${formatCurrency(cell.data.InvoiceProfit || 0)}</span>
+          )}
+        />
+        <Column
+          dataField='PaymentStatus'
+          caption='Payment Status'
+          width={120}
+        />
+        <Column
+          dataField='InvoiceStatus'
+          caption='Status'
+          width={120}
+        />
+      </DataGrid>
+    </div>
+  );
+};
+
 export const ClientInvoicesReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
-  const [gridDataSource, setGridDataSource] = useState<DataSource<IClientInvoice[], string>>();
+  const [gridDataSource, setGridDataSource] = useState<DataSource<IJobMaster, string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -159,8 +336,8 @@ export const ClientInvoicesReport = () => {
   const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
   const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
 
-  const [statusList, setStatusList] = useState('New');
-  const [statusListFilter, setStatusListFilter] = useState<string>('New');
+  const [statusList, setStatusList] = useState('All');
+  const [statusListFilter, setStatusListFilter] = useState<string>('All');
 
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
@@ -174,7 +351,7 @@ export const ClientInvoicesReport = () => {
   }, []);
 
   // Helper function to load data with current parameters
-  const loadClientInvoicesData = useCallback(() => {
+  const loadClientInvoicesData = useCallback(async() => {
     const params: {
       page: number;
       limit: number;
@@ -220,8 +397,15 @@ export const ClientInvoicesReport = () => {
       }
     }
 
-    return fetchClientInvoices(params);
-  }, [paymentStatusFilter, departmentFilter, jobStatusFilter]);
+    try {
+      const clientInvoices = await fetchClientInvoices(params);
+      const masterDetailData = transformToMasterDetail(clientInvoices);
+      return masterDetailData;
+    } catch (error) {
+      console.error('Error loading client invoices:', error);
+      return [];
+    }
+  }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
@@ -233,7 +417,7 @@ export const ClientInvoicesReport = () => {
   // Calculate total profit when grid data changes
   useEffect(() => {
     if (gridDataSource) {
-      gridDataSource.load().then((data: IClientInvoice[]) => {
+      gridDataSource.load().then((data: IJobMaster[]) => {
         const totalInvoice = data.reduce((sum, item) => sum + (item.TotalInvoices || 0), 0);
         const totalProfit = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
         setTotalInvoice(totalInvoice);
@@ -367,12 +551,16 @@ export const ClientInvoicesReport = () => {
             visible: true,
           }}
         >
+          <MasterDetail
+            enabled
+            component={InvoiceDetailTemplate}
+          />
           <Grouping contextMenuEnabled />
           <GroupPanel visible /> {/* or "auto" */}
           <Paging defaultPageSize={100} />
           <Pager visible showPageSizeSelector />
           <LoadPanel showPane={false} />
-          <SearchPanel visible placeholder='Contact Search' />
+          <SearchPanel visible placeholder='Job Search' />
           <ColumnChooser enabled />
           <Export enabled allowExportSelectedData formats={exportFormats} />
           <Selection
@@ -385,7 +573,7 @@ export const ClientInvoicesReport = () => {
           <Scrolling mode='virtual' />
           <Toolbar>
             <Item location='before'>
-              <div className='grid-header'>Client Invoices Report</div>
+              <div className='grid-header'>Jobs & Invoice Details Report</div>
             </Item>
             <Item location='after'>
               <div className='total-profit-display'>Total Invoices: ${formatCurrency(totalInvoice)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
@@ -474,20 +662,21 @@ export const ClientInvoicesReport = () => {
             width={100}
           />
           <Column
-            dataField='QuotationNo'
-            caption='XONO'
+            dataField='Customer'
+            caption='Customer'
+            dataType='string'
             width={150}
+            cellRender={cellNameRender}
           />
           <Column
-            dataField='InvoiceNo'
-            caption='Invoice#'
-            width={100}
+            dataField='DepartmentName'
+            caption='Department'
+            width={120}
           />
           <Column
-            dataField='DueDate'
-            caption='Due Date'
-            dataType='date'
-            width={100}
+            dataField='StatusType'
+            caption='Status Type'
+            width={120}
           />
           <Column
             dataField='POL'
@@ -496,15 +685,8 @@ export const ClientInvoicesReport = () => {
           />
           <Column
             dataField='POD'
-            caption='POD#'
+            caption='POD'
             width={100}
-          />
-          <Column
-            dataField='Customer'
-            caption='Customer'
-            dataType='string'
-            width={150}
-            cellRender={cellNameRender}
           />
           <Column
             dataField='Etd'
@@ -531,11 +713,7 @@ export const ClientInvoicesReport = () => {
             width={100}
           />
           <Column
-            dataField='StatusType'
-            caption='Status Type'
-          />
-          <Column
-            dataField='TotalInvoiceAmount'
+            dataField='TotalInvoices'
             caption='Total Invoices'
             dataType='number'
             cellRender={cellProfitRender}
@@ -548,49 +726,42 @@ export const ClientInvoicesReport = () => {
             dataType='number'
             cellRender={cellProfitRender}
             format='currency'
-            width={100}
-            visible={false}
-          />
-          <Column
-            dataField='DepartmentName'
-            caption='Department'
-            width={100}
-            visible={false}
-          />
-          <Column
-            dataField='Mbol'
-            caption='MBL'
-            width={100}
-            visible={false}
-          />
-          <Column
-            dataField='Volume'
-            caption='Volume'
-            width={100}
-            visible={false}
+            width={120}
           />
           <Column
             dataField='Consignee'
             caption='Consignee'
-            width={100}
+            width={120}
             visible={false}
           />
           <Column
-            dataField='Status'
-            caption='Status'
-            width={150}
+            dataField='Notes'
+            caption='Notes'
+            width={200}
+            visible={false}
+          />
+          <Column
+            dataField='vessel'
+            caption='Vessel'
+            width={120}
             visible={false}
           />
           <Summary>
             <GroupItem
-              column='TotalProfit'
+              column='JobNo'
               summaryType='count'
-              displayFormat='{0} orders'
+              displayFormat='{0} jobs'
             />
             <GroupItem
               column='TotalProfit'
               summaryType='sum'
-              displayFormat='Total: {0}'
+              displayFormat='Total Profit: {0}'
+              showInGroupFooter
+            />
+            <GroupItem
+              column='TotalInvoices'
+              summaryType='sum'
+              displayFormat='Total Invoice Amount: {0}'
               showInGroupFooter
             />
           </Summary>

@@ -36,8 +36,12 @@ const getData = async(queryString?: string, token?: string) => {
 export async function fetchClientInvoices(params: {
   page?: number;
   limit?: number;
-  status?: string;
+  jobStatusType?: string;
   token?: string;
+  fullPaid?: string;
+  statusType?: string;
+  departmentId?: number;
+  jobType?: number;
 } = {}) {
   try {
     // Build query parameters
@@ -45,7 +49,11 @@ export async function fetchClientInvoices(params: {
 
     if (params.page) queryParams.set('page', params.page.toString());
     if (params.limit) queryParams.set('limit', params.limit.toString());
-    if (params.status) queryParams.set('status', params.status);
+    if (params.jobStatusType) queryParams.set('jobStatusType', params.jobStatusType);
+    if (params.statusType) queryParams.set('statusType', params.statusType);
+    if (params.departmentId) queryParams.set('departmentId', params.departmentId.toString());
+    if (params.fullPaid) queryParams.set('fullPaid', params.fullPaid.toString());
+    if (params.jobType) queryParams.set('jobType', params.jobType.toString());
 
     // Get the query string
     const queryString = queryParams.toString();
@@ -75,7 +83,7 @@ export async function fetchClientInvoices(params: {
 export async function getClientInvoicesData(options: {
   page?: number;
   limit?: number;
-  status?: string;
+  jobStatusType?: string;
   token?: string;
 } = {}) {
   const defaultOptions = {
@@ -87,7 +95,7 @@ export async function getClientInvoicesData(options: {
   return fetchClientInvoices({
     page: defaultOptions.page,
     limit: defaultOptions.limit,
-    status: defaultOptions.status,
+    jobStatusType: defaultOptions.jobStatusType,
     token: defaultOptions.token
   });
 }

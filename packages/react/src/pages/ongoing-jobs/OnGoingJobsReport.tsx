@@ -40,7 +40,7 @@ type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
 const filterJobStatusList = ['All', ...JOB_STATUS];
 const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
-const filterStatusList = ['All', ...JOB_STATUS_LIST];``
+const filterStatusList = ['All', ...JOB_STATUS_LIST];
 const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (

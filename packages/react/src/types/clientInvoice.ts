@@ -19,6 +19,13 @@ export interface IClientInvoice extends Document {
   StatusType?: string;
   Eta?: Date;
   Ata?: Date;
+  Etd?: Date;
+  Atd?: Date;
+  POL?: string;
+  POD?: string;
+  InvoiceNo?: string;
+  DueDate?: Date;
+  TotalInvoiceAmount?: number;
   Arrival?: Date;
   UserName?: string;
   Notes?: string;
