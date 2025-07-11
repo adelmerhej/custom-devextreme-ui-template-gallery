@@ -91,11 +91,11 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       jsPDFDocument: doc,
       component: e.component,
     }).then(() => {
-      doc.save('JobStatusReport.pdf');
+      doc.save('OngoingJobsReport.pdf');
     });
   } else {
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('JobStatusReport');
+    const worksheet = workbook.addWorksheet('OngoingJobsReport');
 
     exportDataGridToXLSX({
       component: e.component,
@@ -103,7 +103,7 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'JobStatusReport.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'OngoingJobsReport.xlsx');
       });
     });
     e.cancel = true;
