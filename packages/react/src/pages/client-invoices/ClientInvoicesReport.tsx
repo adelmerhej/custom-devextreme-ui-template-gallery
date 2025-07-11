@@ -672,6 +672,7 @@ export const ClientInvoicesReport = () => {
             dataField='DepartmentName'
             caption='Department'
             width={120}
+            visible={false}
           />
           <Column
             dataField='StatusType'
@@ -727,6 +728,7 @@ export const ClientInvoicesReport = () => {
             cellRender={cellProfitRender}
             format='currency'
             width={120}
+            visible={false}
           />
           <Column
             dataField='Consignee'
