@@ -81,7 +81,8 @@ export const newTask: Task = {
 };
 
 export const newJob = {
-  JobNo: '',
+  JobNo: 0,
+  DepartmentId: 0,
   JobDate: undefined,
   CustomerName: '',
   ConsigneeName: '',
@@ -100,7 +101,6 @@ export const newJob = {
   vessel: '',
   TotalInvoices: 0,
   TotalCosts: 0,
-  DepartmentId: '',
   MemberOf: '',
   JobType: '',
   // Relationships

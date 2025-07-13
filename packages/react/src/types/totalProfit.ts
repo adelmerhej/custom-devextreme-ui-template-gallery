@@ -11,11 +11,12 @@ interface State {
 
 export interface ITotalProfit extends Document {
   _id: string;
-  JobNo: string;
+  JobNo: number;
+  DepartmentId: number;
+  DepartmentName: string;
   JobDate?: Date;
   CustomerName?: string;
   ConsigneeName?: string;
-  DepartmentName?: string;
   StatusType?: string;
   TotalProfit?: number;
   Eta?: Date;
@@ -30,7 +31,6 @@ export interface ITotalProfit extends Document {
   vessel?: string;
   TotalInvoices?: number;
   TotalCosts?: number;
-  DepartmentId: string;
   MemberOf: string;
   JobType: string;
   // Relationships

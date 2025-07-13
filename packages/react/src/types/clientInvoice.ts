@@ -11,11 +11,12 @@ export type JobStatusDepartments = (typeof JOB_STATUS_DEPARTMENTS)[number];
 
 export interface IClientInvoice extends Document {
   _id: string;
-  JobNo: string;
+  JobNo: number;
+  DepartmentId: number;
+  DepartmentName: string;
   JobDate?: Date;
   Customer?: string;
   Consignee?: string;
-  DepartmentName?: string;
   StatusType?: string;
   Eta?: Date;
   Ata?: Date;
@@ -37,7 +38,6 @@ export interface IClientInvoice extends Document {
   TotalInvoices?: number;
   TotalCosts?: number;
   TotalProfit?: number;
-  DepartmentId: string;
   MemberOf: string;
   JobType: string;
   createdAt: Date;

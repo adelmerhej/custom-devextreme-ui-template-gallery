@@ -10,15 +10,15 @@ export type JobStatusDepartments = (typeof JOB_STATUS_DEPARTMENTS)[number];
 
 export interface IJobStatus extends Document {
   _id: string;
+  JobNo: number;
+  DepartmentId: number;
   DepartmentName: string;
   StatusType: string;
   TotalProfit: number;
   OrderBy: string;
-  JobNo: string;
   ReferenceNo: string;
   JobDate: Date;
   OperatingUserId: string;
-  DepartmentId: number;
   UserName: string;
   CustomerName: string;
   PendingInvoices: number;

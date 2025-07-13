@@ -10,11 +10,12 @@ export type JobStatusDepartments = (typeof JOB_STATUS_DEPARTMENTS)[number];
 
 export interface IEmptyContainer extends Document {
   _id: string;
-  JobNo: string;
+  JobNo: number;
+  DepartmentId: number;
+  DepartmentName: string;
   JobDate?: Date;
   CustomerName?: string;
   ConsigneeName?: string;
-  DepartmentName?: string;
   StatusType?: string;
   Eta?: Date;
   Ata?: Date;
@@ -31,7 +32,6 @@ export interface IEmptyContainer extends Document {
   TotalInvoices?: number;
   TotalCosts?: number;
   TotalProfit?: number;
-  DepartmentId: string;
   MissingDocuments: string;
   MemberOf: string;
   JobType: string;

@@ -10,11 +10,12 @@ export type JobStatusDepartments = (typeof JOB_STATUS_DEPARTMENTS)[number];
 
 export interface IOngoingJob extends Document {
   _id: string;
-  JobNo: string;
+  JobNo: number;
+  DepartmentId: number;
+  DepartmentName: string;
   JobDate?: Date;
   CustomerName?: string;
   ConsigneeName?: string;
-  DepartmentName?: string;
   StatusType?: string;
   TotalProfit?: number;
   Eta?: Date;
@@ -29,7 +30,6 @@ export interface IOngoingJob extends Document {
   vessel?: string;
   TotalInvoices?: number;
   TotalCosts?: number;
-  DepartmentId: string;
   MemberOf: string;
   JobType: string;
   createdAt: Date;
