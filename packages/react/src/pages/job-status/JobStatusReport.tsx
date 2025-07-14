@@ -6,7 +6,7 @@ import { Workbook } from 'exceljs';
 //import FilterBuilder, { type FilterBuilderTypes } from 'devextreme-react/filter-builder';
 
 // Importing data fetching function
-import { fetchJobStatuses } from '../../api/dx-xolog-data/admin/reports/job-status/jobStatusApiClient';
+import { fetchJobStatuses, syncJobStatusData } from '../../api/dx-xolog-data/admin/reports/job-status/jobStatusApiClient';
 
 // Import auth context for token access
 import { useAuth } from '../../contexts/auth';
@@ -246,18 +246,22 @@ export const JobStatusReport = () => {
     gridRef.current?.instance().updateDimensions();
   }, []);
 
-  const syncDataOnClick = useCallback(() => {
-    //setPopupVisible(true);
-    setFormDataDefaults({ ...newJob });
+  const syncAndUpdateData = useCallback(async() => {
 
-    // Refresh data with current parameters
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadJobStatusesData,
-    }));
+    try {
+      const result = await syncJobStatusData();
 
-    gridRef.current?.instance().refresh();
-  }, [loadJobStatusesData]);
+      if (!result.success) {
+        throw new Error('Failed to sync Job Status', result);
+      }
+      refresh();
+      notify('Job Status data synced successfully', 'success', 3000);
+    } catch (error) {
+      console.error('Error loading Job Status:', error);
+      return [];
+    }
+
+  }, []);
 
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
     setContactId(data._id);
@@ -444,10 +448,10 @@ export const JobStatusReport = () => {
             <Item location='after' locateInMenu='auto'>
               <Button
                 icon='plus'
-                text='Sync'
+                text='Sync data'
                 type='default'
                 stylingMode='contained'
-                onClick={syncDataOnClick}
+                onClick={syncAndUpdateData}
               />
             </Item>
             <Item

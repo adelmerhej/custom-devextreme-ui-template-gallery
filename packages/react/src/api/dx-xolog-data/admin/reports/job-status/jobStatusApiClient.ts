@@ -79,23 +79,39 @@ export async function fetchJobStatuses(params: {
   }
 }
 
-// Alternative function with different parameters format
-export async function getJobStatusesData(options: {
-  page?: number;
-  limit?: number;
-  status?: string;
-  token?: string;
-} = {}) {
-  const defaultOptions = {
-    page: 1,
-    limit: 50,
-    ...options
-  };
+export async function syncJobStatusData() {
+  try {
 
-  return fetchJobStatuses({
-    page: defaultOptions.page,
-    limit: defaultOptions.limit,
-    status: defaultOptions.status,
-    token: defaultOptions.token
-  });
+    // Use the getData function to fetch all Job Status from MongoDB
+    const signInResult = await signIn('admin@xolog.com', 'Admin@Xolog#16');
+    let token: string | undefined = undefined;
+    if (signInResult && signInResult.isOk && signInResult.data && signInResult.data.token) {
+      token = signInResult.data.token;
+    }
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add Authorization header if token is provided
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/sync/sync-job-status`, {
+      method: 'POST',
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to sync Job Status');
+    }
+
+    const data = await response.json();
+    return data;
+
+  } catch (error) {
+    console.error('Error syncing Job Status:', error);
+    throw error;
+  }
 }

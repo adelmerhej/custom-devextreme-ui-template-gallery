@@ -20,15 +20,12 @@ const getData = async(queryString?: string, token?: string) => {
       method: 'GET',
       headers: headers,
     });
-    console.log('Ongoing Jobs API URL:', `${baseUrl}/ongoing-jobs${queryString ? `?${queryString}` : ''}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch ongoing jobs');
     }
 
     const data = await response.json();
-
-    console.log('Ongoing Jobs Data:', data);
 
     return data;
 
@@ -72,6 +69,7 @@ export async function fetchOngoingJobs(params: {
     params.token = token;
 
     const data = await getData(queryString, params.token);
+    console.log('API returned data:', data);
 
     // Return the data directly - assuming the API returns the expected format
     return data?.data || data || [];
@@ -83,23 +81,39 @@ export async function fetchOngoingJobs(params: {
   }
 }
 
-// Alternative function with different parameters format
-export async function getOngoingJobsData(options: {
-  page?: number;
-  limit?: number;
-  jobStatusType?: string;
-  token?: string;
-} = {}) {
-  const defaultOptions = {
-    page: 1,
-    limit: 100,
-    ...options
-  };
+export async function syncOngoingJobsData() {
+  try {
 
-  return fetchOngoingJobs({
-    page: defaultOptions.page,
-    limit: defaultOptions.limit,
-    jobStatusType: defaultOptions.jobStatusType,
-    token: defaultOptions.token
-  });
+    // Use the getData function to fetch all Client Invoices from MongoDB
+    const signInResult = await signIn('admin@xolog.com', 'Admin@Xolog#16');
+    let token: string | undefined = undefined;
+    if (signInResult && signInResult.isOk && signInResult.data && signInResult.data.token) {
+      token = signInResult.data.token;
+    }
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add Authorization header if token is provided
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/sync/sync-ongoing-jobs`, {
+      method: 'POST',
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to sync Ongoing Jobs');
+    }
+
+    const data = await response.json();
+    return data;
+
+  } catch (error) {
+    console.error('Error syncing Ongoing Jobs:', error);
+    throw error;
+  }
 }

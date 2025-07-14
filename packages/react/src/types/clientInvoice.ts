@@ -43,6 +43,8 @@ export interface IClientInvoice extends Document {
   createdAt: Date;
   updatedAt: Date;
   Invoices: {
+    JobNo: number;
+    DepartmentId: number;
     InvoiceNo: number;
     InvoiceDate?: string;
     CurrencyCode: string;

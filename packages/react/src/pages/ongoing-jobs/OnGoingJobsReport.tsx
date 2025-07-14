@@ -3,10 +3,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
 import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
+import { LoadIndicator } from 'devextreme-react/load-indicator';
 //import FilterBuilder, { type FilterBuilderTypes } from 'devextreme-react/filter-builder';
 
 // Importing data fetching function
-import { fetchOngoingJobs } from '../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
+import { fetchOngoingJobs, syncOngoingJobsData } from '../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
 // Import auth context for token access
 import { useAuth } from '../../contexts/auth';
 
@@ -125,7 +126,7 @@ export const OngoingJobsReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
-  const [gridDataSource, setGridDataSource] = useState<DataSource<IOngoingJob[], string>>();
+  const [gridDataSource, setGridDataSource] = useState<DataSource<IOngoingJob, string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -194,7 +195,22 @@ export const OngoingJobsReport = () => {
       }
     }
 
-    return fetchOngoingJobs(params);
+    return fetchOngoingJobs(params).then(data => {
+      console.log('API returned data:', data);
+      console.log('Data type:', typeof data);
+      console.log('Is array:', Array.isArray(data));
+      console.log('Data length:', data?.length);
+
+      // If API response has a totalProfit field, use it for accurate total
+      if (data && typeof data === 'object' && 'totalProfit' in data) {
+        console.log('Using API totalProfit:', data.totalProfit);
+        setTotalProfit(data.totalProfit || 0);
+        // Return the actual data array
+        return data.data || data || [];
+      }
+
+      return data;
+    });
   }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
@@ -203,42 +219,49 @@ export const OngoingJobsReport = () => {
       load: loadOngoingJobsData,
     }));
   }, [loadOngoingJobsData]);
-
-  // Calculate total profit when grid data changes
+  // Calculate total profit when grid data changes (only if not already set by API)
   useEffect(() => {
-    if (gridDataSource) {
+    if (gridDataSource && totalProfit === 0) {
       gridDataSource.load().then((data: IOngoingJob[]) => {
-        const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
-        setTotalProfit(total);
+        console.log('UseEffect - Data received for total calculation:', data);
+        console.log('UseEffect - Data type:', typeof data);
+        console.log('UseEffect - Is array:', Array.isArray(data));
+        console.log('UseEffect - Data length:', data?.length);
+
+        if (Array.isArray(data)) {
+          const total = data.reduce((sum, item) => {
+            const profit = item.TotalProfit || 0;
+            console.log(`Job ${item.JobNo}: TotalProfit = ${profit}`);
+            return sum + profit;
+          }, 0);
+          setTotalProfit(total);
+          console.log('Calculated Total Profit:', total);
+        } else {
+          console.warn('Data is not an array:', data);
+          setTotalProfit(0);
+        }
+      }).catch(error => {
+        console.error('Error loading data for total calculation:', error);
+        setTotalProfit(0);
       });
     }
-  }, [gridDataSource]);
+  }, [gridDataSource, totalProfit]);
 
-  const changePopupVisibility = useCallback((isVisble) => {
-    setPopupVisible(isVisble);
+  const syncAndUpdateData = useCallback(async() => {
+    try {
+      const result = await syncOngoingJobsData();
+
+      if (!result.success) {
+        throw new Error('Failed to sync Ongoing Jobs', result);
+      }
+      refresh();
+      notify('Ongoing Jobs data synced successfully', 'success', 3000);
+    } catch (error) {
+      console.error('Error loading Ongoing Jobs:', error);
+      return [];
+    }
+
   }, []);
-
-  const changePanelOpened = useCallback(() => {
-    setPanelOpened(!isPanelOpened);
-    gridRef.current?.instance().option('focusedRowIndex', -1);
-  }, [isPanelOpened]);
-
-  const changePanelPinned = useCallback(() => {
-    gridRef.current?.instance().updateDimensions();
-  }, []);
-
-  const syncDataOnClick = useCallback(() => {
-    //setPopupVisible(true);
-    setFormDataDefaults({ ...newJob });
-
-    // Refresh data with current parameters
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadOngoingJobsData,
-    }));
-
-    gridRef.current?.instance().refresh();
-  }, [loadOngoingJobsData]);
 
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
     setContactId(data._id);
@@ -249,6 +272,7 @@ export const OngoingJobsReport = () => {
     const { item: jobStatus }: { item: FilterJobStatusType } = e;
 
     setJobStatus(jobStatus);
+    setTotalProfit(0); // Reset total to get fresh API total
 
     if (jobStatus === 'All') {
       setJobStatusFilter(null);
@@ -265,6 +289,8 @@ export const OngoingJobsReport = () => {
 
   const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
+
+    setTotalProfit(0); // Reset total to get fresh API total
 
     if (departement === 'All') {
       setDepartmentFilter(null);
@@ -284,6 +310,8 @@ export const OngoingJobsReport = () => {
   const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: statusList }: { item: FilterStatusListType } = e;
 
+    setTotalProfit(0); // Reset total to get fresh API total
+
     if (statusList === 'All') {
       setStatusListFilter('All');
     } else {
@@ -302,6 +330,8 @@ export const OngoingJobsReport = () => {
   const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
 
+    setTotalProfit(0); // Reset total to get fresh API total
+
     if (paymentStatus === 'All') {
       setPaymentStatusFilter(null);
     } else {
@@ -318,6 +348,7 @@ export const OngoingJobsReport = () => {
   }, [loadOngoingJobsData]);
 
   const refresh = useCallback(() => {
+    console.log('Refreshing grid...');
     gridRef.current?.instance().refresh();
   }, []);
 
@@ -409,10 +440,10 @@ export const OngoingJobsReport = () => {
             <Item location='after' locateInMenu='auto'>
               <Button
                 icon='plus'
-                text='Sync'
+                text='Sync data'
                 type='default'
                 stylingMode='contained'
-                onClick={syncDataOnClick}
+                onClick={syncAndUpdateData}
               />
             </Item>
             <Item

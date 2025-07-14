@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
@@ -7,6 +8,7 @@ import { Workbook } from 'exceljs';
 // Importing data fetching function
 import {
   fetchClientInvoices,
+  syncClientInvoicesData,
 } from '../../api/dx-xolog-data/admin/reports/client-invoice/clientInvoiceApiClient';
 
 // Import auth context for token access
@@ -154,6 +156,28 @@ const InvoiceDetailTemplate = (props: {
   // Use the invoices directly from the master data
   const invoiceDetails = masterData.Invoices || [];
 
+  console.log('Master Data Keys:', Object.keys(masterData));
+  console.log('Master Data JobNo:', masterData.JobNo);
+  console.log('Master Data Customer:', masterData.Customer);
+  console.log('Master Data Invoices:', masterData.Invoices);
+  console.log('Invoice Details:', invoiceDetails);
+  console.log('Type of masterData.Invoices:', typeof masterData.Invoices);
+  console.log('Is array?', Array.isArray(masterData.Invoices));
+
+  if (!invoiceDetails || invoiceDetails.length === 0) {
+    return (
+      <div style={{ padding: '20px' }}>
+        <h5>Invoice Details for Job #{masterData.JobNo}</h5>
+        <div style={{ marginBottom: '10px', color: '#666' }}>
+          Customer: {masterData.Customer} | Total Invoices: ${formatCurrency(masterData.TotalInvoices || 0)}
+        </div>
+        <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+          No invoice details available for this job.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '20px' }}>
       <h5>Invoice Details for Job #{masterData.JobNo}</h5>
@@ -249,6 +273,23 @@ export const ClientInvoicesReport = () => {
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
 
+  const syncAndUpdateData = useCallback(async() => {
+
+    try {
+      const result = await syncClientInvoicesData();
+
+      if (!result.success) {
+        throw new Error('Failed to sync Client Invoices', result);
+      }
+      refresh();
+      notify('Client Invoices data synced successfully', 'success', 3000);
+    } catch (error) {
+      console.error('Error loading client invoices:', error);
+      return [];
+    }
+
+  }, []);
+
   // Helper function to load data with current parameters
   const loadClientInvoicesData = useCallback(async() => {
     const params: {
@@ -300,7 +341,10 @@ export const ClientInvoicesReport = () => {
       const clientInvoices = await fetchClientInvoices(params);
       //const masterDetailData = transformToMasterDetail(clientInvoices);
 
-      console.log('Client Invoices fetched:', clientInvoices);
+      console.log('Client Invoices:', clientInvoices);
+      console.log('First invoice item:', clientInvoices[0]);
+      console.log('Invoices array in first item:', clientInvoices[0]?.Invoices);
+
       return clientInvoices as IClientInvoice[];
     } catch (error) {
       console.error('Error loading client invoices:', error);
@@ -309,10 +353,13 @@ export const ClientInvoicesReport = () => {
   }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
-    setGridDataSource(new DataSource({
-      key: '_id',
+    const dataSource = new DataSource({
+      key: 'JobNo', // Changed from '_id' to 'JobNo' based on sample data
       load: loadClientInvoicesData,
-    }));
+    });
+
+    console.log('Setting up DataSource with JobNo as key');
+    setGridDataSource(dataSource);
   }, [loadClientInvoicesData]);
 
   // Calculate total profit when grid data changes
@@ -353,7 +400,7 @@ export const ClientInvoicesReport = () => {
 
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
-      key: '_id',
+      key: 'JobNo',
       load: loadClientInvoicesData,
     }));
   }, [loadClientInvoicesData]);
@@ -371,7 +418,7 @@ export const ClientInvoicesReport = () => {
 
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
-      key: '_id',
+      key: 'JobNo',
       load: loadClientInvoicesData,
     }));
   }, [loadClientInvoicesData]);
@@ -389,25 +436,20 @@ export const ClientInvoicesReport = () => {
 
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
-      key: '_id',
+      key: 'JobNo',
       load: loadClientInvoicesData,
     }));
   }, [loadClientInvoicesData]);
 
-  const syncDataOnClick = useCallback(() => {
+  const refreshOnClick = useCallback(() => {
     // Refresh data with current parameters
     setGridDataSource(new DataSource({
-      key: '_id',
+      key: 'JobNo',
       load: loadClientInvoicesData,
     }));
 
     gridRef.current?.instance().refresh();
   }, [loadClientInvoicesData]);
-
-  const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
-    setContactId(data._id);
-    setPanelOpened(true);
-  }, []);
 
   const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
@@ -422,13 +464,15 @@ export const ClientInvoicesReport = () => {
 
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
-      key: '_id',
+      key: 'JobNo',
       load: loadClientInvoicesData,
     }));
   }, [loadClientInvoicesData]);
 
   // Wrapper component for InvoiceDetailTemplate
   const InvoiceDetailWrapper = useCallback((props: { data: IClientInvoice }) => {
+    console.log('InvoiceDetailWrapper received props:', props);
+    console.log('InvoiceDetailWrapper received data:', props.data);
     return (
       <InvoiceDetailTemplate
         data={props.data}
@@ -533,7 +577,7 @@ export const ClientInvoicesReport = () => {
                 text='Sync data'
                 type='default'
                 stylingMode='contained'
-                onClick={syncDataOnClick}
+                onClick={syncAndUpdateData}
               />
             </Item>
 

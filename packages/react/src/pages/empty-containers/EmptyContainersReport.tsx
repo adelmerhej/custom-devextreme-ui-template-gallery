@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
 
 // Importing data fetching function
-import { fetchEmptyContainers } from '../../api/dx-xolog-data/admin/reports/empty-container/emptyContainerApiClient';
+import { fetchEmptyContainers, syncEmptyContainersData } from '../../api/dx-xolog-data/admin/reports/empty-container/emptyContainerApiClient';
 
 // Import auth context for token access
 import { useAuth } from '../../contexts/auth';
@@ -175,6 +175,23 @@ export const EmptyContainersReport = () => {
     return undefined;
   }, []);
 
+  const syncAndUpdateData = useCallback(async() => {
+
+    try {
+      const result = await syncEmptyContainersData();
+
+      if (!result.success) {
+        throw new Error('Failed to sync Empty Containers', result);
+      }
+      refresh();
+      notify('Empty Containers data synced successfully', 'success', 3000);
+    } catch (error) {
+      console.error('Error loading Empty Containers:', error);
+      return [];
+    }
+
+  }, []);
+
   // Helper function to load data with current parameters
   const loadEmptyContainersData = useCallback(async() => {
 
@@ -219,19 +236,6 @@ export const EmptyContainersReport = () => {
       key: '_id',
       load: loadEmptyContainersData,
     }));
-  }, [loadEmptyContainersData]);
-
-  const syncDataOnClick = useCallback(() => {
-    //setPopupVisible(true);
-    //setFormDataDefaults({ ...newJob });
-
-    // Refresh data with current parameters
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadEmptyContainersData,
-    }));
-
-    gridRef.current?.instance().refresh();
   }, [loadEmptyContainersData]);
 
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
@@ -377,7 +381,7 @@ export const EmptyContainersReport = () => {
                 text='Sync data'
                 type='default'
                 stylingMode='contained'
-                onClick={syncDataOnClick}
+                onClick={syncAndUpdateData}
               />
             </Item>
             <Item

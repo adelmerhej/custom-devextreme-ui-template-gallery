@@ -6,7 +6,7 @@ import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
 
 // Importing data fetching function
-import { fetchTotalProfits } from '../../api/dx-xolog-data/admin/reports/total-profit/totalProfitApiClient';
+import { fetchTotalProfits, syncTotalProfitData } from '../../api/dx-xolog-data/admin/reports/total-profit/totalProfitApiClient';
 
 // Import auth context for token access
 import { useAuth } from '../../contexts/auth';
@@ -203,40 +203,22 @@ export const TotalProfitReport = () => {
     gridRef.current?.instance().updateDimensions();
   }, []);
 
-  // Function to update grid dimensions on window resize
-  // Function to sync data on button click
-  const syncDataOnClick = useCallback(async() => {
-    setError(null);
+  const syncAndUpdateData = useCallback(async() => {
 
     try {
-      console.log('Syncing...', new Date().toLocaleTimeString());
+      const result = await syncTotalProfitData();
 
-      const response = await fetch('/api/sync/reports/all', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      //setPopupVisible(true);
-
-      // Refresh data with current parameters
-      setGridDataSource(
-        new DataSource({
-          key: '_id',
-          load: loadTotalProfitsData,
-        })
-      );
-
-      gridRef.current?.instance().refresh();
-    } catch (err: unknown) {
-      console.log('This error: ', err);
-      setError(
-        err instanceof Error ? err.message : 'An unexpected error occurred'
-      );
-    } finally {
-      setIsSyncing(false);
+      if (!result.success) {
+        throw new Error('Failed to sync Total Profit', result);
+      }
+      refresh();
+      notify('Total Profit data synced successfully', 'success', 3000);
+    } catch (error) {
+      console.error('Error loading Total Profit:', error);
+      return [];
     }
-  }, [loadTotalProfitsData]);
+
+  }, []);
 
   // Function to handle row click
   const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
@@ -344,7 +326,7 @@ export const TotalProfitReport = () => {
                 text='Sync data'
                 type='default'
                 stylingMode='contained'
-                onClick={syncDataOnClick}
+                onClick={syncAndUpdateData}
               />
             </Item>
             <Item
