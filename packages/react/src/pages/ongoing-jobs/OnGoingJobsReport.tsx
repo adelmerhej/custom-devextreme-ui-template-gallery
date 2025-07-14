@@ -196,14 +196,8 @@ export const OngoingJobsReport = () => {
     }
 
     return fetchOngoingJobs(params).then(data => {
-      console.log('API returned data:', data);
-      console.log('Data type:', typeof data);
-      console.log('Is array:', Array.isArray(data));
-      console.log('Data length:', data?.length);
-
       // If API response has a totalProfit field, use it for accurate total
       if (data && typeof data === 'object' && 'totalProfit' in data) {
-        console.log('Using API totalProfit:', data.totalProfit);
         setTotalProfit(data.totalProfit || 0);
         // Return the actual data array
         return data.data || data || [];
@@ -223,19 +217,12 @@ export const OngoingJobsReport = () => {
   useEffect(() => {
     if (gridDataSource && totalProfit === 0) {
       gridDataSource.load().then((data: IOngoingJob[]) => {
-        console.log('UseEffect - Data received for total calculation:', data);
-        console.log('UseEffect - Data type:', typeof data);
-        console.log('UseEffect - Is array:', Array.isArray(data));
-        console.log('UseEffect - Data length:', data?.length);
-
         if (Array.isArray(data)) {
           const total = data.reduce((sum, item) => {
             const profit = item.TotalProfit || 0;
-            console.log(`Job ${item.JobNo}: TotalProfit = ${profit}`);
             return sum + profit;
           }, 0);
           setTotalProfit(total);
-          console.log('Calculated Total Profit:', total);
         } else {
           console.warn('Data is not an array:', data);
           setTotalProfit(0);
@@ -348,7 +335,6 @@ export const OngoingJobsReport = () => {
   }, [loadOngoingJobsData]);
 
   const refresh = useCallback(() => {
-    console.log('Refreshing grid...');
     gridRef.current?.instance().refresh();
   }, []);
 

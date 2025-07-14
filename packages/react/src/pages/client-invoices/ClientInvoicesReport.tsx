@@ -156,14 +156,6 @@ const InvoiceDetailTemplate = (props: {
   // Use the invoices directly from the master data
   const invoiceDetails = masterData.Invoices || [];
 
-  console.log('Master Data Keys:', Object.keys(masterData));
-  console.log('Master Data JobNo:', masterData.JobNo);
-  console.log('Master Data Customer:', masterData.Customer);
-  console.log('Master Data Invoices:', masterData.Invoices);
-  console.log('Invoice Details:', invoiceDetails);
-  console.log('Type of masterData.Invoices:', typeof masterData.Invoices);
-  console.log('Is array?', Array.isArray(masterData.Invoices));
-
   if (!invoiceDetails || invoiceDetails.length === 0) {
     return (
       <div style={{ padding: '20px' }}>
@@ -340,11 +332,6 @@ export const ClientInvoicesReport = () => {
     try {
       const clientInvoices = await fetchClientInvoices(params);
       //const masterDetailData = transformToMasterDetail(clientInvoices);
-
-      console.log('Client Invoices:', clientInvoices);
-      console.log('First invoice item:', clientInvoices[0]);
-      console.log('Invoices array in first item:', clientInvoices[0]?.Invoices);
-
       return clientInvoices as IClientInvoice[];
     } catch (error) {
       console.error('Error loading client invoices:', error);

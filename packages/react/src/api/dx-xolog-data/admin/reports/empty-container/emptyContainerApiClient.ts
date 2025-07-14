@@ -65,8 +65,6 @@ export async function fetchEmptyContainers(params: {
 
     params.token = token;
 
-    console.log('Fetching Empty Containers with params:', params);
-
     const data = await getData(queryString, params.token);
 
     // Return the full response with totalProfit for the component to use

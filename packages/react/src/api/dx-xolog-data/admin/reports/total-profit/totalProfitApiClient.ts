@@ -61,8 +61,6 @@ export async function fetchTotalProfits(params: {
 
     const data = await getData(queryString, params.token);
 
-    console.log('Total Profit:', data.sumOfTotalProfit, 'items:', data);
-
     // Return the data directly - assuming the API returns the expected format
     return data?.data || data || [];
 
