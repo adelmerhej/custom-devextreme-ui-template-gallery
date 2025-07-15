@@ -17,6 +17,7 @@ export interface IEmptyContainer extends Document {
   CustomerName?: string;
   ConsigneeName?: string;
   StatusType?: string;
+  TotalProfit?: number;
   Eta?: Date;
   Ata?: Date;
   Arrival?: Date;
@@ -31,7 +32,6 @@ export interface IEmptyContainer extends Document {
   PaymentDate?: Date;
   TotalInvoices?: number;
   TotalCosts?: number;
-  TotalProfit?: number;
   MissingDocuments: string;
   MemberOf: string;
   JobType: string;

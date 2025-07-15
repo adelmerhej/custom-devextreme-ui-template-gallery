@@ -68,11 +68,7 @@ export async function fetchEmptyContainers(params: {
     const data = await getData(queryString, params.token);
 
     // Return the full response with totalProfit for the component to use
-    return {
-      data: data?.data || data || [],
-      totalProfit: data?.totalProfit || 0,
-      ...data
-    };
+    return data?.data || data || [];
 
   } catch (error: unknown) {
     console.error('Error fetching Empty Containers:', error);

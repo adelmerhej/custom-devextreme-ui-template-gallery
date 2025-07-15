@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF as JsPdf } from 'jspdf';
@@ -248,13 +249,19 @@ export const EmptyContainersReport = () => {
       }
     }
 
-    return fetchEmptyContainers(params);
+    const data = await fetchEmptyContainers(params);
+    return data;
   }, [paymentStatusFilter, departmentFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadEmptyContainersData,
+      load: async() => {
+        const data = await loadEmptyContainersData();
+        // If data has items, return items, else return data
+        const returnedData = Array.isArray(data) ? data : (data?.items || []);
+        return returnedData;
+      },
     }));
   }, [loadEmptyContainersData]);
 
@@ -281,7 +288,6 @@ export const EmptyContainersReport = () => {
       gridDataSource.load().then((data: IEmptyContainer[]) => {
         const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
         setTotalProfit(total);
-        console.log('Total Profit:', total);
       });
     }
   }, [gridDataSource]);
@@ -533,7 +539,6 @@ export const EmptyContainersReport = () => {
             dataField='Notes'
             caption='Notes'
             width={100}
-            visible={false}
           />
           <Column
             dataField='Departure'
@@ -552,7 +557,6 @@ export const EmptyContainersReport = () => {
             caption='Payment Status'
             dataType='boolean'
             width={120}
-            visible={false}
             cellRender={cellFullPaidRender}
           />
           <Column

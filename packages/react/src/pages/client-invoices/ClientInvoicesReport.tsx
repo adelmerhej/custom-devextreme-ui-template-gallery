@@ -681,7 +681,7 @@ export const ClientInvoicesReport = () => {
             dataType='number'
             cellRender={cellProfitRender}
             format='currency'
-            width={150}
+            width={120}
           />
           <Column
             dataField='TotalProfit'
@@ -690,7 +690,6 @@ export const ClientInvoicesReport = () => {
             cellRender={cellProfitRender}
             format='currency'
             width={120}
-            visible={false}
           />
           <Column
             dataField='Consignee'
@@ -719,13 +718,21 @@ export const ClientInvoicesReport = () => {
             <GroupItem
               column='TotalProfit'
               summaryType='sum'
-              displayFormat='Total Profit: {0}'
+              customizeText={(data) => {
+                const value = typeof data.value === 'number' ? data.value : 0;
+                const formattedValue = formatCurrency(value);
+                return `Totals: $${formattedValue}`;
+              }}
               showInGroupFooter
             />
             <GroupItem
               column='TotalInvoices'
               summaryType='sum'
-              displayFormat='Total Invoice Amount: {0}'
+              customizeText={(data) => {
+                const value = typeof data.value === 'number' ? data.value : 0;
+                const formattedValue = formatCurrency(value);
+                return `Totals: $${formattedValue}`;
+              }}
               showInGroupFooter
             />
           </Summary>

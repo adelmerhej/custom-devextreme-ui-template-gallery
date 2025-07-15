@@ -50,7 +50,7 @@ import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporte
 import { JobStatusPayment as JobStatusPaymentType,
   IJobStatus, JobStatus, StatusList, JobStatusDepartments } from '@/types/jobStatus';
 
-import { FormPopup, ContactNewForm, ContactPanel } from '../../components';
+import { FormPopup, ContactPanel } from '../../components';
 import { ContactStatus } from '../../components';
 
 import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
@@ -254,7 +254,7 @@ export const JobStatusReport = () => {
     }
   }, [gridDataSource]);
 
-  const changePopupVisibility = useCallback((isVisble) => {
+  const changePopupVisibility = useCallback((isVisble: boolean | ((prevState: boolean) => boolean)) => {
     setPopupVisible(isVisble);
   }, []);
 
