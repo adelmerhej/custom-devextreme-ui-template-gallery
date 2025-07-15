@@ -5,6 +5,25 @@ import { jsPDF as JsPdf } from 'jspdf';
 import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
 
+// Add CSS for spinning animation
+const spinningStyles = `
+  .spinning-icon-button .dx-icon.dx-icon-refresh {
+    animation: dx-spin 1s linear infinite;
+  }
+  
+  @keyframes dx-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+// Inject styles into the document head
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = spinningStyles;
+  document.head.appendChild(styleElement);
+}
+
 // Importing data fetching function
 import { fetchTotalProfits, syncTotalProfitData } from '../../api/dx-xolog-data/admin/reports/total-profit/totalProfitApiClient';
 

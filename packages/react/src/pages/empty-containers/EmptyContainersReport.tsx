@@ -6,7 +6,7 @@ import { Workbook } from 'exceljs';
 
 // Add CSS for spinning animation
 const spinningStyles = `
-  .dx-icon-spin {
+  .spinning-icon-button .dx-icon.dx-icon-refresh {
     animation: dx-spin 1s linear infinite;
   }
   
@@ -400,7 +400,7 @@ export const EmptyContainersReport = () => {
                 stylingMode='contained'
                 onClick={syncAndUpdateData}
                 disabled={isSyncing}
-                className={isSyncing ? 'dx-icon-spin' : ''}
+                elementAttr={isSyncing ? { class: 'spinning-icon-button' } : {}}
               />
             </Item>
             <Item
