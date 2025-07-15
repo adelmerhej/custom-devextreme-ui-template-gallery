@@ -283,8 +283,10 @@ export const ClientInvoicesReport = () => {
 
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const syncAndUpdateData = useCallback(async() => {
+    setIsSyncing(true);
 
     try {
       const result = await syncClientInvoicesData();
@@ -297,8 +299,9 @@ export const ClientInvoicesReport = () => {
     } catch (error) {
       console.error('Error loading client invoices:', error);
       return [];
+    }finally {
+      setIsSyncing(false);
     }
-
   }, []);
 
   // Helper function to load data with current parameters
@@ -579,11 +582,13 @@ export const ClientInvoicesReport = () => {
             </Item>
             <Item location='after' locateInMenu='auto'>
               <Button
-                icon='plus'
+                icon={isSyncing ? 'refresh' : 'plus'}
                 text='Sync data'
                 type='default'
                 stylingMode='contained'
                 onClick={syncAndUpdateData}
+                disabled={isSyncing}
+                elementAttr={isSyncing ? { class: 'spinning-icon-button' } : {}}
               />
             </Item>
 

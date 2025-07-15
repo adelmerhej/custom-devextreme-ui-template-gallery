@@ -164,6 +164,7 @@ export const OngoingJobsReport = () => {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
 
   const [totalProfit, setTotalProfit] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const gridRef = useRef<DataGridRef>(null);
 
@@ -254,6 +255,7 @@ export const OngoingJobsReport = () => {
   }, [gridDataSource, totalProfit]);
 
   const syncAndUpdateData = useCallback(async() => {
+    setIsSyncing(true);
     try {
       const result = await syncOngoingJobsData();
 
@@ -265,6 +267,8 @@ export const OngoingJobsReport = () => {
     } catch (error) {
       console.error('Error loading Ongoing Jobs:', error);
       return [];
+    }finally {
+      setIsSyncing(false);
     }
 
   }, []);
@@ -444,11 +448,13 @@ export const OngoingJobsReport = () => {
             </Item>
             <Item location='after' locateInMenu='auto'>
               <Button
-                icon='plus'
+                icon={isSyncing ? 'refresh' : 'plus'}
                 text='Sync data'
                 type='default'
                 stylingMode='contained'
                 onClick={syncAndUpdateData}
+                disabled={isSyncing}
+                elementAttr={isSyncing ? { class: 'spinning-icon-button' } : {}}
               />
             </Item>
             <Item

@@ -167,7 +167,6 @@ export const TotalProfitReport = () => {
   const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
   const gridRef = useRef<DataGridRef>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [totalProfit, setTotalProfit] = useState<number>(0);
@@ -223,7 +222,7 @@ export const TotalProfitReport = () => {
   }, []);
 
   const syncAndUpdateData = useCallback(async() => {
-
+    setIsSyncing(true);
     try {
       const result = await syncTotalProfitData();
 
@@ -235,6 +234,8 @@ export const TotalProfitReport = () => {
     } catch (error) {
       console.error('Error loading Total Profit:', error);
       return [];
+    }finally {
+      setIsSyncing(false);
     }
 
   }, []);
@@ -341,11 +342,13 @@ export const TotalProfitReport = () => {
             </Item>
             <Item location='after' locateInMenu='auto'>
               <Button
-                icon='plus'
+                icon={isSyncing ? 'refresh' : 'plus'}
                 text='Sync data'
                 type='default'
                 stylingMode='contained'
                 onClick={syncAndUpdateData}
+                disabled={isSyncing}
+                elementAttr={isSyncing ? { class: 'spinning-icon-button' } : {}}
               />
             </Item>
             <Item
