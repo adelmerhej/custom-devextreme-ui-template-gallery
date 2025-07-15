@@ -4,6 +4,25 @@ import { jsPDF as JsPdf } from 'jspdf';
 import { saveAs } from 'file-saver-es';
 import { Workbook } from 'exceljs';
 
+// Add CSS for spinning animation
+const spinningStyles = `
+  .dx-icon-spin {
+    animation: dx-spin 1s linear infinite;
+  }
+  
+  @keyframes dx-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+// Inject styles into the document head
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = spinningStyles;
+  document.head.appendChild(styleElement);
+}
+
 // Importing data fetching function
 import { fetchEmptyContainers, syncEmptyContainersData } from '../../api/dx-xolog-data/admin/reports/empty-container/emptyContainerApiClient';
 
@@ -164,8 +183,7 @@ export const EmptyContainersReport = () => {
 
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
-
-  let newContactData: IEmptyContainer;
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Helper function to get auth token (placeholder for when auth system includes tokens)
   const getAuthToken = useCallback(() => {
@@ -176,7 +194,7 @@ export const EmptyContainersReport = () => {
   }, []);
 
   const syncAndUpdateData = useCallback(async() => {
-
+    setIsSyncing(true);
     try {
       const result = await syncEmptyContainersData();
 
@@ -187,9 +205,11 @@ export const EmptyContainersReport = () => {
       notify('Empty Containers data synced successfully', 'success', 3000);
     } catch (error) {
       console.error('Error loading Empty Containers:', error);
+      notify('Failed to sync Empty Containers data', 'error', 3000);
       return [];
+    } finally {
+      setIsSyncing(false);
     }
-
   }, []);
 
   // Helper function to load data with current parameters
@@ -246,10 +266,10 @@ export const EmptyContainersReport = () => {
   // Highlight rows based on specific conditions
   const onRowPrepared = useCallback((e: DataGridTypes.RowPreparedEvent) => {
     if (e.rowType === 'data') {
-      const { ArrivalDays, TejrimDays, DiffCntrToCnee } = e.data;
+      const { ArrivalDays, TejrimDays, DiffCntrToCnee, DepartmentId } = e.data;
 
-      // Check if ArrivalDays > 0 and TejrimDays = 0 and DiffCntrToCnee = 0
-      if (ArrivalDays > 0 && TejrimDays === 0 && DiffCntrToCnee === 0) {
+      // Check if ArrivalDays > 0 and TejrimDays = 0 and DiffCntrToCnee = 0 and departmentId in (5, 16)
+      if (ArrivalDays > 0 && TejrimDays === 0 && DiffCntrToCnee === 0 && [5, 16].includes(DepartmentId)) {
         e.rowElement.style.backgroundColor = '#E3F2FD';
       }
     }
@@ -261,6 +281,7 @@ export const EmptyContainersReport = () => {
       gridDataSource.load().then((data: IEmptyContainer[]) => {
         const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
         setTotalProfit(total);
+        console.log('Total Profit:', total);
       });
     }
   }, [gridDataSource]);
@@ -304,10 +325,6 @@ export const EmptyContainersReport = () => {
       load: loadEmptyContainersData,
     }));
   }, [loadEmptyContainersData]);
-
-  const onDataChanged = useCallback((data) => {
-    newContactData = data;
-  }, []);
 
   return (
     <div className='view crm-contact-list'>
@@ -377,11 +394,13 @@ export const EmptyContainersReport = () => {
             </Item>
             <Item location='after' locateInMenu='auto'>
               <Button
-                icon='plus'
+                icon={isSyncing ? 'refresh' : 'plus'}
                 text='Sync data'
                 type='default'
                 stylingMode='contained'
                 onClick={syncAndUpdateData}
+                disabled={isSyncing}
+                className={isSyncing ? 'dx-icon-spin' : ''}
               />
             </Item>
             <Item
@@ -483,8 +502,6 @@ export const EmptyContainersReport = () => {
             dataField='MissingDocuments'
             caption='Missing Documents'
             width={100}
-            visible={false}
-            //cellMissingDocumentsRender
             cellRender={cellMissingDocumentsRender}
           />
           <Column
