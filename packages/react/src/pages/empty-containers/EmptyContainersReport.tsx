@@ -37,6 +37,7 @@ import {
   DataGridTypes, Paging, Pager, Grouping, GroupPanel,
   Summary,
   GroupItem,
+  TotalItem,
   SortByGroupSummaryInfo
 } from 'devextreme-react/data-grid';
 
@@ -222,10 +223,18 @@ export const EmptyContainersReport = () => {
         departmentId?: number;
         fullPaid?: string;
         jobType?: number;
+        SortBy?: string;
+        SortOrder?: string;
       } = {
         page: 1,
         limit: 100,
       };
+
+    const SortBy = 'OrderNo';
+    const SortOrder = 'asc';
+
+    params.SortBy = SortBy;
+    params.SortOrder = SortOrder;
 
     // Add payment status filter if set
     if (paymentStatusFilter) {
@@ -282,12 +291,46 @@ export const EmptyContainersReport = () => {
     }
   }, []);
 
-  // Calculate total profit when grid data changes
+  // Calculate total profit from the data source
+  const onContentReady = useCallback((e: DataGridTypes.ContentReadyEvent) => {
+    try {
+      const gridInstance = e.component;
+      const dataSource = gridInstance.getDataSource();
+
+      if (dataSource) {
+        // Get all items from the data source (this includes filtered data but not grouped)
+        const allItems = dataSource.items();
+        if (allItems && Array.isArray(allItems)) {
+          const total = allItems.reduce((sum: number, item: IEmptyContainer) => {
+            return sum + (item.TotalProfit || 0);
+          }, 0);
+          setTotalProfit(total);
+        } else {
+          // If items() doesn't work, load the data directly
+          dataSource.load().then((data: IEmptyContainer[]) => {
+            const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+            setTotalProfit(total);
+          }).catch(() => {
+            setTotalProfit(0);
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Error calculating total profit:', error);
+      setTotalProfit(0);
+    }
+  }, []);
+
+  // Additional calculation when gridDataSource changes (for safety)
   useEffect(() => {
     if (gridDataSource) {
       gridDataSource.load().then((data: IEmptyContainer[]) => {
-        const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
-        setTotalProfit(total);
+        if (Array.isArray(data)) {
+          const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+          setTotalProfit(total);
+        }
+      }).catch(() => {
+        setTotalProfit(0);
       });
     }
   }, [gridDataSource]);
@@ -344,6 +387,7 @@ export const EmptyContainersReport = () => {
           onRowClick={onRowClick}
           onRowPrepared={onRowPrepared}
           onExporting={onExporting}
+          onContentReady={onContentReady}
           allowColumnReordering
           showBorders
           ref={gridRef}
@@ -581,7 +625,7 @@ export const EmptyContainersReport = () => {
             dataField='DepartmentName'
             caption='Department'
             visible={false}
-            groupIndex={0}
+            //groupIndex={0}
             sortOrder='desc'
             sortIndex={0}
           />
@@ -600,6 +644,12 @@ export const EmptyContainersReport = () => {
                 return `Total: $ ${formattedValue}`;
               }}
               showInGroupFooter
+            />
+            {/* Add total summary for the entire grid */}
+            <TotalItem
+              column='TotalProfit'
+              summaryType='sum'
+              displayFormat='Total: ${0}'
             />
           </Summary>
           <SortByGroupSummaryInfo summaryItem='count' />

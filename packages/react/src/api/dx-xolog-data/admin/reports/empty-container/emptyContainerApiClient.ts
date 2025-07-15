@@ -41,6 +41,8 @@ export async function fetchEmptyContainers(params: {
   fullPaid?: string;
   departmentId?: number;
   jobType?: number;
+  SortBy?: string;
+  SortOrder?: string;
 } = {}) {
   try {
     // Build query parameters
@@ -52,6 +54,8 @@ export async function fetchEmptyContainers(params: {
     if (params.departmentId) queryParams.set('departmentId', params.departmentId.toString());
     if (params.fullPaid) queryParams.set('fullPaid', params.fullPaid.toString());
     if (params.jobType) queryParams.set('jobType', params.jobType.toString());
+    if (params.SortBy) queryParams.set('sortBy', params.SortBy);
+    if (params.SortOrder) queryParams.set('sortOrder', params.SortOrder);
 
     // Get the query string
     const queryString = queryParams.toString();
