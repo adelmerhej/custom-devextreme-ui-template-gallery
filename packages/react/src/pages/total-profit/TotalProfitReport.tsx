@@ -185,7 +185,7 @@ export const TotalProfitReport = () => {
   const loadTotalProfitsData = useCallback(() => {
     return fetchTotalProfits({
       page: 1,
-      limit: 100,
+      limit: 0,
     });
   }, [getAuthToken]);
 
@@ -240,12 +240,6 @@ export const TotalProfitReport = () => {
 
   }, []);
 
-  // Function to handle row click
-  const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
-    setContactId(data._id);
-    setPanelOpened(true);
-  }, []);
-
   const [status, setStatus] = useState(filterStatusList[0]);
 
   const filterByStatus = useCallback(
@@ -294,7 +288,6 @@ export const TotalProfitReport = () => {
           focusedRowEnabled
           height='100%'
           dataSource={gridDataSource}
-          onRowClick={onRowClick}
           onExporting={onExporting}
           allowColumnReordering
           showBorders

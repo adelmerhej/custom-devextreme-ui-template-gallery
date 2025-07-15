@@ -125,6 +125,7 @@ const cellMissingDocumentsRender = (cell: DataGridTypes.ColumnCellTemplateData) 
       type='checkbox'
 
       checked={isMissed}
+      readOnly
       style={{
         accentColor: isMissed ? '#F44336' : '#4CAF50',
       }}
@@ -227,7 +228,7 @@ export const EmptyContainersReport = () => {
         SortOrder?: string;
       } = {
         page: 1,
-        limit: 100,
+        limit: 0, // 0 means no limit, load all data
       };
 
     const SortBy = 'OrderNo';
@@ -273,11 +274,6 @@ export const EmptyContainersReport = () => {
       },
     }));
   }, [loadEmptyContainersData]);
-
-  const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
-    setContactId(data._id);
-    setPanelOpened(true);
-  }, []);
 
   // Highlight rows based on specific conditions
   const onRowPrepared = useCallback((e: DataGridTypes.RowPreparedEvent) => {
@@ -384,7 +380,6 @@ export const EmptyContainersReport = () => {
           focusedRowEnabled
           height='100%'
           dataSource={gridDataSource}
-          onRowClick={onRowClick}
           onRowPrepared={onRowPrepared}
           onExporting={onExporting}
           onContentReady={onContentReady}

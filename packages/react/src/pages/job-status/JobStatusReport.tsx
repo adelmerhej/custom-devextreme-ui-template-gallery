@@ -199,7 +199,7 @@ export const JobStatusReport = () => {
       jobType?: number;
     } = {
       page: 1,
-      limit: 100,
+      limit: 0, // 0 means no limit, load all data
     };
 
     // Add payment status filter if set
@@ -285,11 +285,6 @@ export const JobStatusReport = () => {
       setIsSyncing(false);
     }
 
-  }, []);
-
-  const onRowClick = useCallback(({ data }: DataGridTypes.RowClickEvent) => {
-    setContactId(data._id);
-    setPanelOpened(true);
   }, []);
 
   const filterByJobStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
@@ -393,7 +388,6 @@ export const JobStatusReport = () => {
           focusedRowEnabled
           height='100%'
           dataSource={gridDataSource}
-          onRowClick={onRowClick}
           onExporting={onExporting}
           allowColumnReordering
           showBorders

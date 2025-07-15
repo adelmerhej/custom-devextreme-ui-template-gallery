@@ -266,8 +266,6 @@ export const ClientInvoicesReport = () => {
 
   const [gridDataSource, setGridDataSource] = useState<DataSource<IClientInvoice, string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
-  const [contactId, setContactId] = useState<number>(0);
-  const [popupVisible, setPopupVisible] = useState(false);
   const gridRef = useRef<DataGridRef>(null);
   const [totalProfit, setTotalProfit] = useState<number>(0);
   const [totalInvoice, setTotalInvoice] = useState<number>(0);
@@ -281,8 +279,6 @@ export const ClientInvoicesReport = () => {
   const [statusList, setStatusList] = useState('All');
   const [statusListFilter, setStatusListFilter] = useState<string>('All');
 
-  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const syncAndUpdateData = useCallback(async() => {
@@ -310,25 +306,13 @@ export const ClientInvoicesReport = () => {
       page: number;
       limit: number;
       jobStatusType?: string;
-      fullPaid?: string;
       statusType?: string;
       departmentId?: number;
       jobType?: number;
     } = {
       page: 1,
-      limit: 100,
+      limit: 0,
     };
-
-    // Add payment status filter if set
-    if (paymentStatusFilter) {
-      if (paymentStatusFilter === 'Full Paid') {
-        params.fullPaid = 'true';
-      } else if (paymentStatusFilter === 'Not Paid') {
-        params.fullPaid = 'false';
-      }else {
-        params.fullPaid = undefined;
-      }
-    }
 
     // Add status filter if set
     if (jobStatusFilter && jobStatusFilter !== 'All') {
@@ -339,6 +323,8 @@ export const ClientInvoicesReport = () => {
     if (statusListFilter && statusListFilter !== 'All') {
       params.statusType = statusListFilter;
     }
+
+    console.log('Loading Client Invoices with params:', params);
 
     // Add department filter if set
     if (departmentFilter && departmentFilter !== 'All') {
@@ -359,7 +345,7 @@ export const ClientInvoicesReport = () => {
       console.error('Error loading client invoices:', error);
       return [];
     }
-  }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
+  }, [statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
     const dataSource = new DataSource({
@@ -460,24 +446,6 @@ export const ClientInvoicesReport = () => {
     gridRef.current?.instance().refresh();
   }, [loadClientInvoicesData]);
 
-  const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
-
-    if (paymentStatus === 'All') {
-      setPaymentStatusFilter(null);
-    } else {
-      setPaymentStatusFilter(paymentStatus);
-    }
-
-    setPaymentStatus(paymentStatus);
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: 'JobNo',
-      load: loadClientInvoicesData,
-    }));
-  }, [loadClientInvoicesData]);
-
   // Wrapper component for InvoiceDetailTemplate
   const InvoiceDetailWrapper = useCallback((props: { data: IClientInvoice }) => {
     console.log('InvoiceDetailWrapper received props:', props);
@@ -568,16 +536,6 @@ export const ClientInvoicesReport = () => {
                 dropDownOptions={dropDownOptions}
                 useSelectMode
                 onSelectionChanged={filterByStatusList}
-              />
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterPaymentList}
-                stylingMode='text'
-                text={paymentStatus}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByJobPaymentStatus}
               />
             </Item>
             <Item location='after' locateInMenu='auto'>
@@ -738,7 +696,6 @@ export const ClientInvoicesReport = () => {
           </Summary>
           <SortByGroupSummaryInfo summaryItem='count' />
         </DataGrid>
-        <ContactPanel contactId={contactId} isOpened={isPanelOpened} changePanelOpened={changePanelOpened} changePanelPinned={changePanelPinned} />
       </div>
     </div>
   );
