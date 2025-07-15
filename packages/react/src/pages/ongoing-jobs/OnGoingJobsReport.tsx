@@ -560,6 +560,11 @@ export const OngoingJobsReport = () => {
             caption='Status'
             visible={false}
           />
+          <Column
+            dataField='JobStatusType'
+            caption='Job Type'
+            visible={false}
+          />
 
           <Summary>
             <GroupItem
