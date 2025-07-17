@@ -222,9 +222,9 @@ export const OngoingJobsReport = () => {
         // Return the actual data array
         return data.data || data || [];
       }
-
       return data;
     });
+
   }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
@@ -233,26 +233,27 @@ export const OngoingJobsReport = () => {
       load: loadOngoingJobsData,
     }));
   }, [loadOngoingJobsData]);
+
   // Calculate total profit when grid data changes (only if not already set by API)
-  useEffect(() => {
-    if (gridDataSource && totalProfit === 0) {
-      gridDataSource.load().then((data: IOngoingJob[]) => {
-        if (Array.isArray(data)) {
-          const total = data.reduce((sum, item) => {
-            const profit = item.TotalProfit || 0;
-            return sum + profit;
-          }, 0);
-          setTotalProfit(total);
-        } else {
-          console.warn('Data is not an array:', data);
-          setTotalProfit(0);
-        }
-      }).catch(error => {
-        console.error('Error loading data for total calculation:', error);
-        setTotalProfit(0);
-      });
-    }
-  }, [gridDataSource, totalProfit]);
+  // useEffect(() => {
+  //   if (gridDataSource && totalProfit === 0) {
+  //     gridDataSource.load().then((data: IOngoingJob[]) => {
+  //       if (Array.isArray(data)) {
+  //         const total = data.reduce((sum, item) => {
+  //           const profit = item.TotalProfit || 0;
+  //           return sum + profit;
+  //         }, 0);
+  //         setTotalProfit(total);
+  //       } else {
+  //         console.warn('Data is not an array:', data);
+  //         setTotalProfit(0);
+  //       }
+  //     }).catch(error => {
+  //       console.error('Error loading data for total calculation:', error);
+  //       setTotalProfit(0);
+  //     });
+  //   }
+  // }, [gridDataSource, totalProfit]);
 
   const syncAndUpdateData = useCallback(async() => {
     setIsSyncing(true);
