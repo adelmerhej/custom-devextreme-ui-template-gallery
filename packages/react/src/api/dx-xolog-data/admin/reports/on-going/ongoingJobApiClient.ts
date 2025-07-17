@@ -71,7 +71,8 @@ export async function fetchOngoingJobs(params: {
     const data = await getData(queryString, params.token);
 
     // Return the data directly - assuming the API returns the expected format
-    return data?.data || data || [];
+
+    return data || data || [];
 
   } catch (error: unknown) {
     console.error('Error fetching ongoing jobs:', error);
