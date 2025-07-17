@@ -106,6 +106,10 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
   }
 };
 
+const cellTotalInvoicesRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
+  <span>${cell.data.TotalInvoices?.toFixed(2) || '0.00'}</span>
+);
+
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <div className='name-template'>
     <div>{cell.data.Customer}</div>
@@ -163,7 +167,7 @@ const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: numb
       return { ids: [16], specialCondition: { id: 16, jobType: 3 } };
     default:
       return { ids: [0] };
-  } // This closing brace was missing
+  }
 };
 
 // Detail template component for invoice details
@@ -174,6 +178,8 @@ const InvoiceDetailTemplate = (props: {
 
   // Use the invoices directly from the master data
   const invoiceDetails = masterData.Invoices || [];
+
+  console.log('Rendering InvoiceDetailTemplate for JobNo:', masterData.JobNo, invoiceDetails);
 
   if (!invoiceDetails || invoiceDetails.length === 0) {
     return (
@@ -196,6 +202,7 @@ const InvoiceDetailTemplate = (props: {
         Customer: {masterData.Customer} | Total Invoices: ${formatCurrency(masterData.TotalInvoices || 0)}
       </div>
       <DataGrid
+        key={`invoice-detail-grid-${masterData.JobNo}`}
         dataSource={invoiceDetails}
         showBorders
         showRowLines
@@ -348,6 +355,12 @@ export const ClientInvoicesReport = () => {
   }, [statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
+    loadClientInvoicesData().then((data) => {
+      console.log('Fetched data:', data);
+    });
+  }, []);
+
+  useEffect(() => {
     const dataSource = new DataSource({
       key: 'JobNo', // Changed from '_id' to 'JobNo' based on sample data
       load: loadClientInvoicesData,
@@ -448,8 +461,8 @@ export const ClientInvoicesReport = () => {
 
   // Wrapper component for InvoiceDetailTemplate
   const InvoiceDetailWrapper = useCallback((props: { data: IClientInvoice }) => {
-    console.log('InvoiceDetailWrapper received props:', props);
-    console.log('InvoiceDetailWrapper received data:', props.data);
+    console.log('Rendering detail for JobNo:', props.data.JobNo, props.data);
+
     return (
       <InvoiceDetailTemplate
         data={props.data}
@@ -480,6 +493,7 @@ export const ClientInvoicesReport = () => {
         >
           <MasterDetail
             enabled
+            autoExpandAll
             component={InvoiceDetailWrapper}
           />
           <Grouping contextMenuEnabled />
@@ -635,9 +649,9 @@ export const ClientInvoicesReport = () => {
           />
           <Column
             dataField='TotalInvoices'
-            caption='Total Invoices'
+            caption='Total Invoices New'
             dataType='number'
-            cellRender={cellProfitRender}
+            cellRender={cellTotalInvoicesRender}
             format='currency'
             width={120}
           />
@@ -666,6 +680,12 @@ export const ClientInvoicesReport = () => {
             caption='Vessel'
             width={120}
             visible={false}
+          />
+          <Column
+            dataField='Invoices'
+            caption='Invoices Count'
+            cellRender={(cell) => <span>{cell.data.Invoices?.length || 0}</span>}
+            width={100}
           />
           <Summary>
             <GroupItem
