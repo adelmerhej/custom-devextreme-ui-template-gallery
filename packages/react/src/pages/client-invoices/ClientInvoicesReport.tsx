@@ -493,7 +493,6 @@ export const ClientInvoicesReport = () => {
         >
           <MasterDetail
             enabled
-            autoExpandAll
             component={InvoiceDetailWrapper}
           />
           <Grouping contextMenuEnabled />
