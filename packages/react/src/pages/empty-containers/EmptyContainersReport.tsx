@@ -499,7 +499,7 @@ export const EmptyContainersReport = () => {
             dataField='CustomerName'
             caption='Customer'
             dataType='string'
-            width={250}
+            width={150}
             cellRender={cellNameRender}
           />
           <Column
@@ -519,11 +519,11 @@ export const EmptyContainersReport = () => {
             caption='Tejrim Date'
             dataType='date'
             cellRender={(cell) => cellDateRender(cell, 'TejrimDate')}
-            width={150}
+            width={100}
           />
           <Column
             dataField='dtCntrToCnee'
-            caption='Cntr To Cnee'
+            caption='Date To Cnee'
             dataType='date'
             width={100}
             cellRender={(cell) => cellDateRender(cell, 'dtCntrToCnee')}
@@ -550,13 +550,6 @@ export const EmptyContainersReport = () => {
             cellRender={cellMissingDocumentsRender}
           />
           <Column
-            dataField='TotalProfit'
-            caption='Total Profit'
-            dataType='number'
-            cellRender={cellProfitRender}
-            format='currency'
-          />
-          <Column
             dataField='ContainerNo'
             caption='Container#'
             width={100}
@@ -578,6 +571,7 @@ export const EmptyContainersReport = () => {
             dataField='Notes'
             caption='Notes'
             width={100}
+            visible={false}
           />
           <Column
             dataField='Departure'
@@ -605,6 +599,14 @@ export const EmptyContainersReport = () => {
             visible={false}
             width={150}
             cellRender={(cell) => cellDateRender(cell, 'FullPaidDate')}
+          />
+          <Column
+            dataField='TotalProfit'
+            caption='Total Profit'
+            dataType='number'
+            width={100}
+            cellRender={cellProfitRender}
+            format='currency'
           />
           <Column
             dataField='PaidDO'
