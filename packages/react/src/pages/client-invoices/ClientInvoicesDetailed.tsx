@@ -10,8 +10,16 @@ import {
   syncClientInvoicesData,
 } from '../../api/dx-xolog-data/admin/reports/client-invoice/clientInvoiceApi';
 
+// Helper function to format number with thousand separators
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 export const DetailTemplate = (props: DataGridTypes.MasterDetailTemplateData) => {
-  const { Customer } = props.data.data;
+  const { Customer, DepartmentName, TotalInvoices } = props.data.data;
   const [gridDataSource, setGridDataSource] = React.useState<DataSource | null>(null);
 
   const dataSource = new DataSource({
@@ -44,22 +52,29 @@ export const DetailTemplate = (props: DataGridTypes.MasterDetailTemplateData) =>
 
   return (
     <React.Fragment>
-      <div className='master-detail-caption'>
-        {`${Customer}'s Invoices:`}
+      <div style={{ padding: '5px' }}>
+        <div className='master-detail-caption'>
+          Detailed Invocies:
+        </div>
+        <div style={{ marginBottom: '5px', color: '#666' }}>
+        Customer: {Customer} | Department: {DepartmentName} | Total Invoices: ${formatCurrency(TotalInvoices || 0)}
+        </div>
+        <DataGrid
+          dataSource={dataSource}
+          showBorders
+          showRowLines
+          rowAlternationEnabled
+          columnAutoWidth
+        >
+          <Column dataField='InvoiceNo' />
+          <Column dataField='InvoiceDate' dataType='date' />
+          <Column dataField='DueDate' dataType='date' />
+          <Column dataField='CurrencyCode' />
+          <Column dataField='TotalAmount' />
+          <Column dataField='TotalReceived' />
+          <Column dataField='TotalDue' />
+        </DataGrid>
       </div>
-      <DataGrid
-        dataSource={dataSource}
-        showBorders
-        columnAutoWidth
-      >
-        <Column dataField='InvoiceNo' />
-        <Column dataField='InvoiceDate' dataType='date' />
-        <Column dataField='DueDate' dataType='date' />
-        <Column dataField='CurrencyCode' />
-        <Column dataField='TotalAmount' />
-        <Column dataField='TotalReceived' />
-        <Column dataField='TotalDue' />
-      </DataGrid>
     </React.Fragment>
   );
 };
