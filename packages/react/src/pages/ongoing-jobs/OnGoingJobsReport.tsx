@@ -169,7 +169,7 @@ export const OngoingJobsReport = () => {
   const gridRef = useRef<DataGridRef>(null);
 
   // Helper function to load data with current parameters
-  const loadOngoingJobsData = useCallback(() => {
+  const loadOngoingJobsData = useCallback(async() => {
     const params: {
       page: number;
       limit: number;
@@ -215,15 +215,14 @@ export const OngoingJobsReport = () => {
       }
     }
 
-    return fetchOngoingJobs(params).then(data => {
-      // If API response has a totalProfit field, use it for accurate total
-      if (data && typeof data === 'object' && 'totalProfit' in data) {
-        setTotalProfit(data.totalProfit || 0);
-        // Return the actual data array
-        return data.data || data || [];
-      }
-      return data;
-    });
+    const data = await fetchOngoingJobs(params);
+    // If API response has a totalProfit field, use it for accurate total
+    if (data && typeof data === 'object' && 'totalProfit' in data) {
+      setTotalProfit(data.totalProfit || 0);
+      // Return the actual data array
+      return data.data || data || [];
+    }
+    return data;
 
   }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
 
@@ -588,14 +587,28 @@ export const OngoingJobsReport = () => {
 
           <Summary>
             <GroupItem
-              column='TotalProfit'
+              column='JobNo'
               summaryType='count'
-              displayFormat='{0} orders'
+              displayFormat='{0} jobs'
             />
             <GroupItem
               column='TotalProfit'
               summaryType='sum'
-              displayFormat='Total: {0}'
+              customizeText={(data) => {
+                const value = typeof data.value === 'number' ? data.value : 0;
+                const formattedValue = formatCurrency(value);
+                return `Totals: $${formattedValue}`;
+              }}
+              showInGroupFooter
+            />
+            <GroupItem
+              column='TotalInvoices'
+              summaryType='sum'
+              customizeText={(data) => {
+                const value = typeof data.value === 'number' ? data.value : 0;
+                const formattedValue = formatCurrency(value);
+                return `Totals: $${formattedValue}`;
+              }}
               showInGroupFooter
             />
           </Summary>

@@ -81,6 +81,7 @@ const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
 const cellTotalInvoicesRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <span>${cell.data.TotalInvoices?.toFixed(2) || '0.00'}</span>
 );
+
 const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <span>${cell.data.TotalProfit?.toFixed(2) || '0.00'}</span>
 );

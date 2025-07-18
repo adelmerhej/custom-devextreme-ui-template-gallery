@@ -50,6 +50,17 @@ export const DetailTemplate = (props: DataGridTypes.MasterDetailTemplateData) =>
     setGridDataSource(dataSource);
   }, [loadClientInvoicesData]);
 
+  const formatTotalInvoiceRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
+    <span>${cell.data.TotalAmount?.toFixed(2) || '0.00'}</span>
+  );
+
+  const formatTotalReceivedRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
+    <span>${cell.data.TotalReceive?.toFixed(2) || '0.00'}</span>
+  );
+
+  const formatTotalDueRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
+    <span>${cell.data.TotalDue?.toFixed(2) || '0.00'}</span>
+  );
   return (
     <React.Fragment>
       <div style={{ padding: '5px' }}>
@@ -70,9 +81,39 @@ export const DetailTemplate = (props: DataGridTypes.MasterDetailTemplateData) =>
           <Column dataField='InvoiceDate' dataType='date' />
           <Column dataField='DueDate' dataType='date' />
           <Column dataField='CurrencyCode' />
-          <Column dataField='TotalAmount' />
-          <Column dataField='TotalReceived' />
-          <Column dataField='TotalDue' />
+          <Column
+            dataField='TotalAmount'
+            dataType='number'
+            format='currency'
+            alignment='right'
+            customizeText={(data) => {
+              const value = typeof data.value === 'number' ? data.value : 0;
+              const formattedValue = formatCurrency(value);
+              return `${formattedValue}`;
+            }}
+          />
+          <Column
+            dataField='TotalReceived'
+            dataType='number'
+            format='currency'
+            alignment='right'
+            customizeText={(data) => {
+              const value = typeof data.value === 'number' ? data.value : 0;
+              const formattedValue = formatCurrency(value);
+              return `${formattedValue}`;
+            }}
+          />
+          <Column
+            dataField='TotalDue'
+            dataType='number'
+            format='currency'
+            alignment='right'
+            customizeText={(data) => {
+              const value = typeof data.value === 'number' ? data.value : 0;
+              const formattedValue = formatCurrency(value);
+              return `${formattedValue}`;
+            }}
+          />
         </DataGrid>
       </div>
     </React.Fragment>
