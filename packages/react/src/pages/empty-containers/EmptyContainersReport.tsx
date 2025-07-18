@@ -646,7 +646,11 @@ export const EmptyContainersReport = () => {
             <TotalItem
               column='TotalProfit'
               summaryType='sum'
-              displayFormat='Total: ${0}'
+              customizeText={(data) => {
+                const value = typeof data.value === 'number' ? data.value : 0;
+                const formattedValue = formatCurrency(value);
+                return `Total: $ ${formattedValue}`;
+              }}
             />
           </Summary>
           <SortByGroupSummaryInfo summaryItem='count' />
