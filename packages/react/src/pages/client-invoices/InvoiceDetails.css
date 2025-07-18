@@ -45,7 +45,7 @@
 }
 
 .invoice-details-container {
-  padding: 20px;
+  padding: 10px;
 }
 
 .invoice-summary-header {
@@ -58,7 +58,7 @@
 }
 
 .loading-container {
-  padding: 20px;
+  padding: 10px;
   text-align: center;
   color: #666;
 }
