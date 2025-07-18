@@ -514,17 +514,25 @@ export const ClientInvoicesReport = () => {
             dataField='TotalInvoices'
             caption='Total Invoices New'
             dataType='number'
-            cellRender={cellTotalInvoicesRender}
             format='currency'
             width={120}
+            customizeText={(data) => {
+              const value = typeof data.value === 'number' ? data.value : 0;
+              const formattedValue = formatCurrency(value);
+              return `${formattedValue}`;
+            }}
           />
           <Column
             dataField='TotalProfit'
             caption='Total Profit'
             dataType='number'
-            cellRender={cellProfitRender}
             format='currency'
             width={120}
+            customizeText={(data) => {
+              const value = typeof data.value === 'number' ? data.value : 0;
+              const formattedValue = formatCurrency(value);
+              return `${formattedValue}`;
+            }}
           />
           <Column
             dataField='Consignee'
