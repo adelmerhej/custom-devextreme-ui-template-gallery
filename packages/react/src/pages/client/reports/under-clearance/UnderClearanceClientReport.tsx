@@ -23,12 +23,10 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(styleElement);
 }
 
-//import FilterBuilder, { type FilterBuilderTypes } from 'devextreme-react/filter-builder';
-
 // Importing data fetching function
-import { fetchOngoingJobs, syncOngoingJobsData } from '../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
+import { fetchOngoingJobs, syncOngoingJobsData } from '../../../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
 // Import auth context for token access
-import { useAuth } from '../../contexts/auth';
+import { useAuth } from '../../../../contexts/auth';
 
 import {
   DataGrid, DataGridRef,
@@ -47,20 +45,14 @@ import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
 
 import { JobStatusPayment as JobStatusPaymentType,
-  IOngoingJob, JobStatus, StatusList, JobStatusDepartments } from '@/types/ongoingJob';
+  IOngoingJob } from '@/types/ongoingJob';
 
-import { JOB_STATUS, JOB_STATUS_DEPARTMENTS, JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
+import { JOB_STATUS_PAYMENT } from '../../../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
-type FilterJobStatusType = JobStatus | 'All';
-type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
-type FilterStatusListType = StatusList | 'All';
 type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
 
-const filterJobStatusList = ['All', ...JOB_STATUS];
-const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
-const filterStatusList = ['All', ...JOB_STATUS_LIST];
 const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
 
 const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
@@ -79,31 +71,6 @@ const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: strin
   return date ? new Date(date).toLocaleDateString() : '';
 };
 
-const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: number[], specialCondition?: { id: number, jobType: number } } => {
-  switch (department) {
-    case 'All':
-      return { ids: [0] };
-    case 'Air Export':
-      return { ids: [2] };
-    case 'Air Import':
-      return { ids: [5] };
-    case 'Land Freight':
-      return { ids: [6] };
-    case 'Air Clearance':
-      return { ids: [8] };
-    case 'Sea Import':
-      return { ids: [16] };
-    case 'Sea Clearance':
-      return { ids: [17] };
-    case 'Sea Export':
-      return { ids: [18] };
-    case 'Sea Cross':
-      return { ids: [16], specialCondition: { id: 16, jobType: 3 } };
-    default:
-      return { ids: [0] };
-  }
-};
-
 const onExporting = (e: DataGridTypes.ExportingEvent) => {
   if (e.format === 'pdf') {
     const doc = new JsPdf();
@@ -111,11 +78,11 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       jsPDFDocument: doc,
       component: e.component,
     }).then(() => {
-      doc.save('OngoingJobsReport.pdf');
+      doc.save('UnderClearanceReport.pdf');
     });
   } else {
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('OngoingJobsReport');
+    const worksheet = workbook.addWorksheet('UnderClearanceReport');
 
     exportDataGridToXLSX({
       component: e.component,
@@ -123,7 +90,7 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'OngoingJobsReport.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'UnderClearanceReport.xlsx');
       });
     });
     e.cancel = true;
@@ -141,46 +108,29 @@ const formatCurrency = (amount: number): string => {
   });
 };
 
-export const OngoingJobsReport = () => {
+export const UnderClearanceClientReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
   const [gridDataSource, setGridDataSource] = useState<DataSource<IOngoingJob, string>>();
-  const [isPanelOpened, setPanelOpened] = useState(false);
-  const [contactId, setContactId] = useState<number>(0);
-  const [popupVisible, setPopupVisible] = useState(false);
-  const [formDataDefaults, setFormDataDefaults] = useState({ ...newJob });
-
-  const [departement, setDepartements] = useState(filterDepartmentList[0]);
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
-
-  const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
-  const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
-
-  const [statusList, setStatusList] = useState('New');
-  const [statusListFilter, setStatusListFilter] = useState<string>('New');
-
   const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
-
   const [totalProfit, setTotalProfit] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const gridRef = useRef<DataGridRef>(null);
 
-  // Helper function to load data with current parameters
-  const loadOngoingJobsData = useCallback(async() => {
+  // Helper function to load data with current parameters - filtered for "Under Clearance" only
+  const loadUnderClearanceData = useCallback(async() => {
     const params: {
       page: number;
       limit: number;
-      jobStatusType?: string;
       fullPaid?: string;
-      statusType?: string;
-      departmentId?: number;
-      jobType?: number;
+      statusType?: string; // Add status type filter
     } = {
       page: 1,
       limit: 0,
+      statusType: 'Under Clearance' // Filter only "Under Clearance" data
     };
 
     // Add payment status filter if set
@@ -189,29 +139,8 @@ export const OngoingJobsReport = () => {
         params.fullPaid = 'true';
       } else if (paymentStatusFilter === 'Not Paid') {
         params.fullPaid = 'false';
-      }else {
+      } else {
         params.fullPaid = undefined;
-      }
-    }
-
-    // Add status filter if set
-    if (jobStatusFilter && jobStatusFilter !== 'All') {
-      params.jobStatusType = jobStatusFilter;
-    }
-
-    // Add status list filter if set
-    if (statusListFilter && statusListFilter !== 'All') {
-      params.statusType = statusListFilter;
-    }
-
-    // Add department filter if set
-    if (departmentFilter && departmentFilter !== 'All') {
-      const departmentResult = getDepartmentId(departmentFilter as FilterJobStatusDepartmentType);
-      if (departmentResult.ids[0] !== 0) {
-        params.departmentId = departmentResult.ids[0];
-        if (departmentResult.specialCondition) {
-          params.jobType = departmentResult.specialCondition.jobType;
-        }
       }
     }
 
@@ -224,35 +153,14 @@ export const OngoingJobsReport = () => {
     }
     return data;
 
-  }, [paymentStatusFilter, statusListFilter, departmentFilter, jobStatusFilter]);
+  }, [paymentStatusFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadOngoingJobsData,
+      load: loadUnderClearanceData,
     }));
-  }, [loadOngoingJobsData]);
-
-  // Calculate total profit when grid data changes (only if not already set by API)
-  // useEffect(() => {
-  //   if (gridDataSource && totalProfit === 0) {
-  //     gridDataSource.load().then((data: IOngoingJob[]) => {
-  //       if (Array.isArray(data)) {
-  //         const total = data.reduce((sum, item) => {
-  //           const profit = item.TotalProfit || 0;
-  //           return sum + profit;
-  //         }, 0);
-  //         setTotalProfit(total);
-  //       } else {
-  //         console.warn('Data is not an array:', data);
-  //         setTotalProfit(0);
-  //       }
-  //     }).catch(error => {
-  //       console.error('Error loading data for total calculation:', error);
-  //       setTotalProfit(0);
-  //     });
-  //   }
-  // }, [gridDataSource, totalProfit]);
+  }, [loadUnderClearanceData]);
 
   const syncAndUpdateData = useCallback(async() => {
     setIsSyncing(true);
@@ -260,77 +168,18 @@ export const OngoingJobsReport = () => {
       const result = await syncOngoingJobsData();
 
       if (!result.success) {
-        throw new Error('Failed to sync Ongoing Jobs', result);
+        throw new Error('Failed to sync Under Clearance data', result);
       }
       refresh();
-      notify('Ongoing Jobs data synced successfully', 'success', 3000);
+      notify('Under Clearance data synced successfully', 'success', 3000);
     } catch (error) {
-      console.error('Error loading Ongoing Jobs:', error);
+      console.error('Error loading Under Clearance data:', error);
       return [];
     }finally {
       setIsSyncing(false);
     }
 
   }, []);
-
-  const filterByJobStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: jobStatus }: { item: FilterJobStatusType } = e;
-
-    setJobStatus(jobStatus);
-    setTotalProfit(0); // Reset total to get fresh API total
-
-    if (jobStatus === 'All') {
-      setJobStatusFilter(null);
-    } else {
-      setJobStatusFilter(jobStatus);
-    }
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadOngoingJobsData,
-    }));
-  }, [loadOngoingJobsData]);
-
-  const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
-
-    setTotalProfit(0); // Reset total to get fresh API total
-
-    if (departement === 'All') {
-      setDepartmentFilter(null);
-    } else {
-      setDepartmentFilter(departement);
-    }
-
-    setDepartements(departement);
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadOngoingJobsData,
-    }));
-  }, [loadOngoingJobsData]);
-
-  const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: statusList }: { item: FilterStatusListType } = e;
-
-    setTotalProfit(0); // Reset total to get fresh API total
-
-    if (statusList === 'All') {
-      setStatusListFilter('All');
-    } else {
-      setStatusListFilter(statusList);
-    }
-
-    setStatusList(statusList);
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadOngoingJobsData,
-    }));
-  }, [loadOngoingJobsData]);
 
   const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
@@ -348,9 +197,9 @@ export const OngoingJobsReport = () => {
     // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadOngoingJobsData,
+      load: loadUnderClearanceData,
     }));
-  }, [loadOngoingJobsData]);
+  }, [loadUnderClearanceData]);
 
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
@@ -395,40 +244,10 @@ export const OngoingJobsReport = () => {
           <Scrolling mode='virtual' />
           <Toolbar>
             <Item location='before'>
-              <div className='grid-header'>Ongoing Jobs Report</div>
+              <div className='grid-header'>Under Clearance Report</div>
             </Item>
             <Item location='after'>
               <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterDepartmentList}
-                stylingMode='text'
-                text={departement}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByJobDepartment}
-              />
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterJobStatusList}
-                stylingMode='text'
-                text={jobStatus}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByJobStatus}
-              />
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterStatusList}
-                stylingMode='text'
-                text={statusList}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByStatusList}
-              />
             </Item>
             <Item location='before' locateInMenu='auto'>
               <DropDownButton

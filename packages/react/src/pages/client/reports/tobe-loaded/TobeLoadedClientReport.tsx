@@ -27,10 +27,10 @@ if (typeof document !== 'undefined') {
 import {
   fetchOngoingJobs,
   syncOngoingJobsData,
-} from '../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
+} from '../../../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
 
 // Import auth context for token access
-import { useAuth } from '../../contexts/auth';
+import { useAuth } from '../../../../contexts/auth';
 
 import {
   DataGrid, DataGridRef,

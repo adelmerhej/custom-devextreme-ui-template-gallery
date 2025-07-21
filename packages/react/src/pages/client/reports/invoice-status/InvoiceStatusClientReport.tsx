@@ -34,10 +34,10 @@ if (typeof document !== 'undefined') {
 import {
   fetchClientInvoices,
   syncClientInvoicesData,
-} from '../../api/dx-xolog-data/admin/reports/client-invoice/clientInvoiceApi';
+} from '../../../../api/dx-xolog-data/admin/reports/client-invoice/clientInvoiceApi';
 
 // Import auth context for token access
-import { useAuth } from '../../contexts/auth';
+import { useAuth } from '../../../../contexts/auth';
 
 import {
   DataGrid, DataGridRef,
@@ -51,32 +51,27 @@ import {
 } from 'devextreme-react/data-grid';
 
 import Button from 'devextreme-react/button';
-import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-button';
+
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
+
+import { IClientInvoice } from '@/types/clientInvoice';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
+import './InvoiceDetails.css';
 
-import { DetailTemplate } from './ClientInvoicesDetailed';
-import { clientInvocies } from './data';
-import { IClientInvoice, JobStatus, InvoicePayment, JobStatusDepartments } from '@/types/clientInvoice';
-import { StatusList, JobStatusPayment as JobStatusPaymentType, } from '@/types/jobStatus';
-import { INVOICE_PAYMENT, JOB_STATUS, JOB_STATUS_DEPARTMENTS,
-  JOB_STATUS_LIST, JOB_STATUS_PAYMENT, newJob } from '../../shared/constants';
+// Import the detailed template component
+import { InvoiceDetailTemplate } from './InvoiceDetailedStatusClientReport';
 
-const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
 
-type FilterJobStatusDepartmentType = JobStatusDepartments | 'All';
-type FilterJobStatusType = JobStatus | 'All';
-type InvoicePaymentType = InvoicePayment | 'All';
-type FilterStatusListType = StatusList | 'All';
-type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
-
-const filterDepartmentList = ['All', ...JOB_STATUS_DEPARTMENTS];
-const filterJobStatusList = ['All', ...JOB_STATUS];
-const filterInvoiceStatusList = ['All', ...INVOICE_PAYMENT];
-const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
+// Helper function to format number with thousand separators
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
 
 const cellTotalInvoicesRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   <span>${cell.data.TotalInvoices?.toFixed(2) || '0.00'}</span>
@@ -93,42 +88,9 @@ const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
   </div>
 );
 
-// Helper function to format number with thousand separators
-const formatCurrency = (amount: number): string => {
-  return amount.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
 const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: string) => {
   const date = cell.data[field];
   return date ? new Date(date).toLocaleDateString() : '';
-};
-
-const getDepartmentId = (department: FilterJobStatusDepartmentType): { ids: number[], specialCondition?: { id: number, jobType: number } } => {
-  switch (department) {
-    case 'All':
-      return { ids: [0] };
-    case 'Air Export':
-      return { ids: [2] };
-    case 'Air Import':
-      return { ids: [5] };
-    case 'Land Freight':
-      return { ids: [6] };
-    case 'Air Clearance':
-      return { ids: [8] };
-    case 'Sea Import':
-      return { ids: [16] };
-    case 'Sea Clearance':
-      return { ids: [17] };
-    case 'Sea Export':
-      return { ids: [18] };
-    case 'Sea Cross':
-      return { ids: [16], specialCondition: { id: 16, jobType: 3 } };
-    default:
-      return { ids: [0] };
-  }
 };
 
 const onExporting = (e: DataGridTypes.ExportingEvent) => {
@@ -138,11 +100,11 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       jsPDFDocument: doc,
       component: e.component,
     }).then(() => {
-      doc.save('EmptyContainer.pdf');
+      doc.save('InvoiceStatusReport.pdf');
     });
   } else {
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('EmptyContainer');
+    const worksheet = workbook.addWorksheet('InvoiceStatusReport');
 
     exportDataGridToXLSX({
       component: e.component,
@@ -150,28 +112,18 @@ const onExporting = (e: DataGridTypes.ExportingEvent) => {
       autoFilterEnabled: true,
     }).then(() => {
       workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'EmptyContainer.xlsx');
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'InvoiceStatusReport.xlsx');
       });
     });
     e.cancel = true;
   }
 };
 
-export const ClientInvoicesReport = () => {
+export const InvoiceStatusClientReport = () => {
   const [gridDataSource, setGridDataSource] = useState<DataSource<IClientInvoice, string>>();
   const gridRef = useRef<DataGridRef>(null);
   const [totalProfit, setTotalProfit] = useState<number>(0);
   const [totalInvoice, setTotalInvoice] = useState<number>(0);
-
-  const [departement, setDepartements] = useState(filterDepartmentList[0]);
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
-
-  const [jobStatus, setJobStatus] = useState(filterJobStatusList[0]);
-  const [jobStatusFilter, setJobStatusFilter] = useState<string | null>(null);
-
-  const [statusList, setStatusList] = useState('All');
-  const [statusListFilter, setStatusListFilter] = useState<string>('All');
-
   const [isSyncing, setIsSyncing] = useState(false);
 
   const refresh = useCallback(() => {
@@ -185,77 +137,51 @@ export const ClientInvoicesReport = () => {
       const result = await syncClientInvoicesData();
 
       if (!result.success) {
-        throw new Error('Failed to sync Client Invoices', result);
+        throw new Error('Failed to sync Invoice Status data', result);
       }
       refresh();
-      notify('Client Invoices data synced successfully', 'success', 3000);
+      notify('Invoice Status data synced successfully', 'success', 3000);
     } catch (error) {
-      console.error('Error loading client invoices:', error);
+      console.error('Error loading invoice status:', error);
       return [];
     }finally {
       setIsSyncing(false);
     }
   }, []);
 
-  // Helper function to load data with current parameters
-  const loadClientInvoicesData = useCallback(async() => {
+  // Helper function to load data - no filters applied
+  const loadInvoiceStatusData = useCallback(async() => {
     const params: {
       page: number;
       limit: number;
-      jobStatusType?: string;
-      statusType?: string;
-      departmentId?: number;
-      jobType?: number;
     } = {
       page: 1,
       limit: 0,
     };
 
-    // Add status filter if set
-    if (jobStatusFilter && jobStatusFilter !== 'All') {
-      params.jobStatusType = jobStatusFilter;
-    }
-
-    console.log('Loading client invoices with params:', params);
-
-    // Add status list filter if set
-    if (statusListFilter && statusListFilter !== 'All') {
-      params.statusType = statusListFilter;
-    }
-
-    // Add department filter if set
-    if (departmentFilter && departmentFilter !== 'All') {
-      const departmentResult = getDepartmentId(departmentFilter as FilterJobStatusDepartmentType);
-      if (departmentResult.ids[0] !== 0) {
-        params.departmentId = departmentResult.ids[0];
-        if (departmentResult.specialCondition) {
-          params.jobType = departmentResult.specialCondition.jobType;
-        }
-      }
-    }
+    console.log('Loading invoice status with params:', params);
 
     try {
       const clientInvoices = await fetchClientInvoices(params);
-      //const masterDetailData = transformToMasterDetail(clientInvoices);
       return clientInvoices as IClientInvoice[];
     } catch (error) {
-      console.error('Error loading client invoices:', error);
+      console.error('Error loading invoice status:', error);
       return [];
     }
-  }, [statusListFilter, departmentFilter, jobStatusFilter]);
+  }, []);
 
   useEffect(() => {
-    loadClientInvoicesData();
+    loadInvoiceStatusData();
   }, []);
 
   useEffect(() => {
     const dataSource = new DataSource({
       key: 'JobNo',
-      load: loadClientInvoicesData,
+      load: loadInvoiceStatusData,
     });
 
     setGridDataSource(dataSource);
-  }, [loadClientInvoicesData]);
+  }, [loadInvoiceStatusData]);
 
   // Calculate total profit when grid data changes
   useEffect(() => {
@@ -269,69 +195,15 @@ export const ClientInvoicesReport = () => {
     }
   }, [gridDataSource]);
 
-  const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
-
-    if (departement === 'All') {
-      setDepartmentFilter(null);
-    } else {
-      setDepartmentFilter(departement);
-    }
-
-    setDepartements(departement);
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: 'JobNo',
-      load: loadClientInvoicesData,
-    }));
-  }, [loadClientInvoicesData]);
-
-  const filterByJobStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: jobStatus }: { item: FilterJobStatusType } = e;
-
-    setJobStatus(jobStatus);
-
-    if (jobStatus === 'All') {
-      setJobStatusFilter(null);
-    } else {
-      setJobStatusFilter(jobStatus);
-    }
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: 'JobNo',
-      load: loadClientInvoicesData,
-    }));
-  }, [loadClientInvoicesData]);
-
-  const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: statusList }: { item: FilterStatusListType } = e;
-
-    if (statusList === 'All') {
-      setStatusListFilter('All');
-    } else {
-      setStatusListFilter(statusList);
-    }
-
-    setStatusList(statusList);
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: 'JobNo',
-      load: loadClientInvoicesData,
-    }));
-  }, [loadClientInvoicesData]);
-
   const refreshOnClick = useCallback(() => {
     // Refresh data with current parameters
     setGridDataSource(new DataSource({
       key: 'JobNo',
-      load: loadClientInvoicesData,
+      load: loadInvoiceStatusData,
     }));
 
     gridRef.current?.instance().refresh();
-  }, [loadClientInvoicesData]);
+  }, [loadInvoiceStatusData]);
 
   return (
     <div className='view crm-contact-list'>
@@ -356,10 +228,10 @@ export const ClientInvoicesReport = () => {
         >
           <MasterDetail
             enabled
-            component={DetailTemplate}
+            component={InvoiceDetailTemplate}
           />
           <Grouping contextMenuEnabled />
-          <GroupPanel visible /> {/* or "auto" */}
+          <GroupPanel visible />
           <Paging defaultPageSize={100} />
           <Pager visible showPageSizeSelector />
           <LoadPanel showPane={false} />
@@ -376,43 +248,13 @@ export const ClientInvoicesReport = () => {
           <Scrolling mode='virtual' />
           <Toolbar>
             <Item location='before'>
-              <div className='grid-header'>Client Invoices</div>
+              <div className='grid-header'>Invoice Status Report</div>
             </Item>
             <Item location='after'>
               <div className='total-profit-display'>Total Invoices: ${formatCurrency(totalInvoice)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
             </Item>
             <Item location='after'>
               <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterDepartmentList}
-                stylingMode='text'
-                text={departement}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByJobDepartment}
-              />
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterJobStatusList}
-                stylingMode='text'
-                text={jobStatus}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByJobStatus}
-              />
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterInvoiceStatusList}
-                stylingMode='text'
-                text={statusList}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByStatusList}
-              />
             </Item>
             <Item location='after' locateInMenu='auto'>
               <Button
@@ -512,7 +354,7 @@ export const ClientInvoicesReport = () => {
           />
           <Column
             dataField='TotalInvoices'
-            caption='Total Invoices New'
+            caption='Total Invoices'
             dataType='number'
             format='currency'
             width={120}
@@ -591,4 +433,3 @@ export const ClientInvoicesReport = () => {
     </div>
   );
 };
-
