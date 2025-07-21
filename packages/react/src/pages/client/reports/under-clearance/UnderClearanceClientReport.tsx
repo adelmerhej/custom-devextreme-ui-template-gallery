@@ -259,17 +259,6 @@ export const UnderClearanceClientReport = () => {
                 onSelectionChanged={filterByJobPaymentStatus}
               />
             </Item>
-            <Item location='after' locateInMenu='auto'>
-              <Button
-                icon={isSyncing ? 'refresh' : 'plus'}
-                text='Sync data'
-                type='default'
-                stylingMode='contained'
-                onClick={syncAndUpdateData}
-                disabled={isSyncing}
-                elementAttr={isSyncing ? { class: 'spinning-icon-button' } : {}}
-              />
-            </Item>
             <Item
               location='after'
               locateInMenu='auto'

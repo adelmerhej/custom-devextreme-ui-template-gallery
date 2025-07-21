@@ -256,17 +256,6 @@ export const InvoiceStatusClientReport = () => {
             <Item location='after'>
               <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
             </Item>
-            <Item location='after' locateInMenu='auto'>
-              <Button
-                icon={isSyncing ? 'refresh' : 'plus'}
-                text='Sync data'
-                type='default'
-                stylingMode='contained'
-                onClick={syncAndUpdateData}
-                disabled={isSyncing}
-                elementAttr={isSyncing ? { class: 'spinning-icon-button' } : {}}
-              />
-            </Item>
 
             <Item
               location='after'

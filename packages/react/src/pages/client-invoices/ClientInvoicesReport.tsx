@@ -36,9 +36,6 @@ import {
   syncClientInvoicesData,
 } from '../../api/dx-xolog-data/admin/reports/client-invoice/clientInvoiceApi';
 
-// Import auth context for token access
-import { useAuth } from '../../contexts/auth';
-
 import {
   DataGrid, DataGridRef,
   Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
