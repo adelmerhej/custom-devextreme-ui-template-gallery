@@ -16,6 +16,7 @@ import {
   OngoingJobsReport
 } from './pages';
 import { withNavigationWatcher } from './contexts/navigation';
+import { InvoiceStatusClientReport, OnWaterClientReport, TobeLoadedClientReport, UnderClearanceClientReport } from './pages/client-invoices/ClientInvoicesReport';
 
 const routes = [
   {
@@ -37,6 +38,22 @@ const routes = [
   {
     path: '/ongoing-jobs',
     element: OngoingJobsReport,
+  },
+  {
+    path: '/client/reports/to-be-loaded',
+    element: TobeLoadedClientReport,
+  },
+  {
+    path: '/client/reports/on-water',
+    element: OnWaterClientReport,
+  },
+  {
+    path: '/client/reports/under-clearance',
+    element: UnderClearanceClientReport,
+  },
+  {
+    path: '/client/reports/invoice-status',
+    element: InvoiceStatusClientReport,
   },
   {
     path: '/planning-task-list',

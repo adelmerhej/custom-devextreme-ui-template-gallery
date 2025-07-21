@@ -1,7 +1,7 @@
 export const navigation = [
   {
-    text: 'Reports',
-    icon: 'user',
+    text: 'Admin Reports',
+    icon: 'refresh',
     path: '',
     items: [
       {
@@ -23,6 +23,29 @@ export const navigation = [
       {
         text: 'Ongoing Jobs',
         path: '/ongoing-jobs',
+      },
+    ],
+  },
+  {
+    text: 'Client Reports',
+    icon: 'user',
+    path: '',
+    items: [
+      {
+        text: 'To be loaded',
+        path: '/client/reports/to-be-loaded',
+      },
+      {
+        text: 'On Water',
+        path: '/client/reports/on-water',
+      },
+      {
+        text: 'Under Clearance',
+        path: '/client/reports/under-clearance',
+      },
+      {
+        text: 'Invoice Status',
+        path: '/client/reports/invoice-status',
       },
     ],
   },
