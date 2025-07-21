@@ -76,7 +76,9 @@ import { JOB_STATUS, newJob } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
-type FilterContactStatus = ContactStatusType | 'All';
+import { StatusList } from '@/types/jobStatus';
+
+type FilterStatusListType = StatusList | 'All';
 
 const filterStatusList = ['All', ...JOB_STATUS];
 
@@ -170,6 +172,8 @@ export const TotalProfitReport = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [totalProfit, setTotalProfit] = useState<number>(0);
+  const [statusList, setStatusList] = useState('New');
+  const [statusListFilter, setStatusListFilter] = useState<string>('New');
 
   let newContactData: ITotalProfit;
 
@@ -183,11 +187,22 @@ export const TotalProfitReport = () => {
 
   // Helper function to load data with current parameters
   const loadTotalProfitsData = useCallback(() => {
-    return fetchTotalProfits({
+    const params: {
+      page: number;
+      limit: number;
+      statusType?: string;
+    } = {
       page: 1,
       limit: 0,
-    });
-  }, [getAuthToken]);
+    };
+
+    // Add status list filter if set
+    if (statusListFilter && statusListFilter !== 'All') {
+      params.statusType = statusListFilter;
+    }
+
+    return fetchTotalProfits(params);
+  }, [statusListFilter]);
 
   useEffect(() => {
     setGridDataSource(
@@ -240,21 +255,23 @@ export const TotalProfitReport = () => {
 
   }, []);
 
-  const [status, setStatus] = useState(filterStatusList[0]);
+  const filterByStatusList = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
+    const { item: statusList }: { item: FilterStatusListType } = e;
 
-  const filterByStatus = useCallback(
-    (e: DropDownButtonTypes.SelectionChangedEvent) => {
-      const { item: status }: { item: FilterContactStatus } = e;
-      if (status === 'All') {
-        gridRef.current?.instance().clearFilter();
-      } else {
-        gridRef.current?.instance().filter(['StatusType', '=', status]);
-      }
+    if (statusList === 'All') {
+      setStatusListFilter('All');
+    } else {
+      setStatusListFilter(statusList);
+    }
 
-      setStatus(status);
-    },
-    []
-  );
+    setStatusList(statusList);
+
+    // Refresh the grid data source with new filter
+    setGridDataSource(new DataSource({
+      key: '_id',
+      load: loadTotalProfitsData,
+    }));
+  }, [loadTotalProfitsData]);
 
   // Function to update grid dimensions on window resize
   // Function to refresh the grid
@@ -327,10 +344,10 @@ export const TotalProfitReport = () => {
               <DropDownButton
                 items={filterStatusList}
                 stylingMode='text'
-                text={status}
+                text={statusList}
                 dropDownOptions={dropDownOptions}
                 useSelectMode
-                onSelectionChanged={filterByStatus}
+                onSelectionChanged={filterByStatusList}
               />
             </Item>
             <Item location='after' locateInMenu='auto'>
