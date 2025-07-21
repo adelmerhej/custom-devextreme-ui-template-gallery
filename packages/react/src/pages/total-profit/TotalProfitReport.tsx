@@ -194,6 +194,7 @@ export const TotalProfitReport = () => {
     } = {
       page: 1,
       limit: 0,
+
     };
 
     // Add status list filter if set
