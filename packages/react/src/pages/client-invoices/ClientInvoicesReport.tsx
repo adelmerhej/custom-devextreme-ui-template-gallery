@@ -216,6 +216,8 @@ export const ClientInvoicesReport = () => {
       params.jobStatusType = jobStatusFilter;
     }
 
+    console.log('Loading client invoices with params:', params);
+
     // Add status list filter if set
     if (statusListFilter && statusListFilter !== 'All') {
       params.statusType = statusListFilter;
@@ -243,9 +245,7 @@ export const ClientInvoicesReport = () => {
   }, [statusListFilter, departmentFilter, jobStatusFilter]);
 
   useEffect(() => {
-    loadClientInvoicesData().then((data) => {
-      console.log('Fetched data:', data);
-    });
+    loadClientInvoicesData();
   }, []);
 
   useEffect(() => {
