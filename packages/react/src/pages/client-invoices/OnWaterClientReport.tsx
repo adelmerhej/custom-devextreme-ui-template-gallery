@@ -23,10 +23,12 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(styleElement);
 }
 
-//import FilterBuilder, { type FilterBuilderTypes } from 'devextreme-react/filter-builder';
+// Import ongoing jobs API
+import {
+  fetchOngoingJobs,
+  syncOngoingJobsData,
+} from '../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
 
-// Importing data fetching function
-import { fetchOngoingJobs, syncOngoingJobsData } from '../../api/dx-xolog-data/admin/reports/on-going/ongoingJobApiClient';
 // Import auth context for token access
 import { useAuth } from '../../contexts/auth';
 
@@ -35,71 +37,18 @@ import {
   Sorting, Selection, HeaderFilter, Scrolling, SearchPanel,
   ColumnChooser, Export, Column, Toolbar, Item, LoadPanel,
   DataGridTypes, Paging, Pager, Grouping, GroupPanel,
-  FilterRow, Summary, GroupItem, SortByGroupSummaryInfo
+  Summary,
+  GroupItem,
 } from 'devextreme-react/data-grid';
 
-import SelectBox from 'devextreme-react/select-box';
-import TextBox from 'devextreme-react/text-box';
 import Button from 'devextreme-react/button';
-import DropDownButton, { DropDownButtonTypes } from 'devextreme-react/drop-down-button';
-
 import { exportDataGrid as exportDataGridToPdf } from 'devextreme/pdf_exporter';
 import { exportDataGrid as exportDataGridToXLSX } from 'devextreme/excel_exporter';
-
-import { JobStatusPayment as JobStatusPaymentType,
-  IOngoingJob } from '@/types/ongoingJob';
-
-import { JOB_STATUS_PAYMENT } from '../../shared/constants';
 import DataSource from 'devextreme/data/data_source';
 import notify from 'devextreme/ui/notify';
 
-type FilterJobStatusPaymentType = JobStatusPaymentType | 'All';
+import { IOngoingJob } from '@/types/ongoingJob';
 
-const filterPaymentList = ['All', ...JOB_STATUS_PAYMENT];
-
-const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
-  <div className='name-template'>
-    <div>{cell.data.CustomerName}</div>
-    <div className='position'>{cell.data.ConsigneeName}</div>
-  </div>
-);
-
-const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
-  <span>${cell.data.TotalProfit?.toFixed(2) || '0.00'}</span>
-);
-
-const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: string) => {
-  const date = cell.data[field];
-  return date ? new Date(date).toLocaleDateString() : '';
-};
-
-const onExporting = (e: DataGridTypes.ExportingEvent) => {
-  if (e.format === 'pdf') {
-    const doc = new JsPdf();
-    exportDataGridToPdf({
-      jsPDFDocument: doc,
-      component: e.component,
-    }).then(() => {
-      doc.save('OngoingJobsReport.pdf');
-    });
-  } else {
-    const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('OngoingJobsReport');
-
-    exportDataGridToXLSX({
-      component: e.component,
-      worksheet,
-      autoFilterEnabled: true,
-    }).then(() => {
-      workbook.xlsx.writeBuffer().then((buffer) => {
-        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'OngoingJobsReport.xlsx');
-      });
-    });
-    e.cancel = true;
-  }
-};
-
-const dropDownOptions = { width: 'auto' };
 const exportFormats = ['xlsx', 'pdf'];
 
 // Helper function to format number with thousand separators
@@ -110,78 +59,49 @@ const formatCurrency = (amount: number): string => {
   });
 };
 
-export const OngoingJobsReport = () => {
+export const OnWaterClientReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
   const [gridDataSource, setGridDataSource] = useState<DataSource<IOngoingJob, string>>();
-  const [paymentStatus, setPaymentStatus] = useState(filterPaymentList[0]);
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
   const [totalProfit, setTotalProfit] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const gridRef = useRef<DataGridRef>(null);
 
-  // Helper function to load data with current parameters
-  const loadOngoingJobsData = useCallback(async() => {
+  // Helper function to load "On Water" data specifically
+  const loadOnWaterData = useCallback(async() => {
     const params: {
       page: number;
       limit: number;
-      fullPaid?: string;
+      jobStatusType?: string;
     } = {
       page: 1,
       limit: 0,
+      jobStatusType: 'On Water', // Filter specifically for "On Water" status
     };
 
-    // Add payment status filter if set
-    if (paymentStatusFilter) {
-      if (paymentStatusFilter === 'Full Paid') {
-        params.fullPaid = 'true';
-      } else if (paymentStatusFilter === 'Not Paid') {
-        params.fullPaid = 'false';
-      } else {
-        params.fullPaid = undefined;
+    try {
+      const data = await fetchOngoingJobs(params);
+      // If API response has a totalProfit field, use it for accurate total
+      if (data && typeof data === 'object' && 'totalProfit' in data) {
+        setTotalProfit(data.totalProfit || 0);
+        // Return the actual data array
+        return data.data || data || [];
       }
+      return data;
+    } catch (error) {
+      console.error('Error loading On Water data:', error);
+      return [];
     }
-
-    const data = await fetchOngoingJobs(params);
-    // If API response has a totalProfit field, use it for accurate total
-    if (data && typeof data === 'object' && 'totalProfit' in data) {
-      setTotalProfit(data.totalProfit || 0);
-      // Return the actual data array
-      return data.data || data || [];
-    }
-    return data;
-
-  }, [paymentStatusFilter]);
+  }, []);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
       key: '_id',
-      load: loadOngoingJobsData,
+      load: loadOnWaterData,
     }));
-  }, [loadOngoingJobsData]);
-
-  // Calculate total profit when grid data changes (only if not already set by API)
-  // useEffect(() => {
-  //   if (gridDataSource && totalProfit === 0) {
-  //     gridDataSource.load().then((data: IOngoingJob[]) => {
-  //       if (Array.isArray(data)) {
-  //         const total = data.reduce((sum, item) => {
-  //           const profit = item.TotalProfit || 0;
-  //           return sum + profit;
-  //         }, 0);
-  //         setTotalProfit(total);
-  //       } else {
-  //         console.warn('Data is not an array:', data);
-  //         setTotalProfit(0);
-  //       }
-  //     }).catch(error => {
-  //       console.error('Error loading data for total calculation:', error);
-  //       setTotalProfit(0);
-  //     });
-  //   }
-  // }, [gridDataSource, totalProfit]);
+  }, [loadOnWaterData]);
 
   const syncAndUpdateData = useCallback(async() => {
     setIsSyncing(true);
@@ -189,42 +109,63 @@ export const OngoingJobsReport = () => {
       const result = await syncOngoingJobsData();
 
       if (!result.success) {
-        throw new Error('Failed to sync Ongoing Jobs', result);
+        throw new Error('Failed to sync On Water data');
       }
       refresh();
-      notify('Ongoing Jobs data synced successfully', 'success', 3000);
+      notify('On Water data synced successfully', 'success', 3000);
     } catch (error) {
-      console.error('Error loading Ongoing Jobs:', error);
-      return [];
-    }finally {
+      console.error('Error syncing On Water data:', error);
+      notify('Error syncing data', 'error', 3000);
+    } finally {
       setIsSyncing(false);
     }
-
   }, []);
-
-  const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
-    const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
-
-    setTotalProfit(0); // Reset total to get fresh API total
-
-    if (paymentStatus === 'All') {
-      setPaymentStatusFilter(null);
-    } else {
-      setPaymentStatusFilter(paymentStatus);
-    }
-
-    setPaymentStatus(paymentStatus);
-
-    // Refresh the grid data source with new filter
-    setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadOngoingJobsData,
-    }));
-  }, [loadOngoingJobsData]);
 
   const refresh = useCallback(() => {
     gridRef.current?.instance().refresh();
   }, []);
+
+  const cellNameRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
+    <div className='name-template'>
+      <div>{cell.data.CustomerName}</div>
+      <div className='position'>{cell.data.ConsigneeName}</div>
+    </div>
+  );
+
+  const cellProfitRender = (cell: DataGridTypes.ColumnCellTemplateData) => (
+    <span>${cell.data.TotalProfit?.toFixed(2) || '0.00'}</span>
+  );
+
+  const cellDateRender = (cell: DataGridTypes.ColumnCellTemplateData, field: string) => {
+    const date = cell.data[field];
+    return date ? new Date(date).toLocaleDateString() : '';
+  };
+
+  const onExporting = (e: DataGridTypes.ExportingEvent) => {
+    if (e.format === 'pdf') {
+      const doc = new JsPdf();
+      exportDataGridToPdf({
+        jsPDFDocument: doc,
+        component: e.component,
+      }).then(() => {
+        doc.save('OnWaterReport.pdf');
+      });
+    } else {
+      const workbook = new Workbook();
+      const worksheet = workbook.addWorksheet('OnWaterReport');
+
+      exportDataGridToXLSX({
+        component: e.component,
+        worksheet,
+        autoFilterEnabled: true,
+      }).then(() => {
+        workbook.xlsx.writeBuffer().then((buffer) => {
+          saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'OnWaterReport.xlsx');
+        });
+      });
+      e.cancel = true;
+    }
+  };
 
   return (
     <div className='view crm-contact-list'>
@@ -252,7 +193,7 @@ export const OngoingJobsReport = () => {
           <Paging defaultPageSize={100} />
           <Pager visible showPageSizeSelector />
           <LoadPanel showPane={false} />
-          <SearchPanel visible placeholder='Contact Search' />
+          <SearchPanel visible placeholder='Search On Water Jobs' />
           <ColumnChooser enabled />
           <Export enabled allowExportSelectedData formats={exportFormats} />
           <Selection
@@ -265,20 +206,10 @@ export const OngoingJobsReport = () => {
           <Scrolling mode='virtual' />
           <Toolbar>
             <Item location='before'>
-              <div className='grid-header'>Ongoing Jobs Report</div>
+              <div className='grid-header'>On Water Jobs Report</div>
             </Item>
             <Item location='after'>
               <div className='total-profit-display'>Total Profit: ${formatCurrency(totalProfit)} &nbsp;&nbsp;&nbsp;&nbsp;</div>
-            </Item>
-            <Item location='before' locateInMenu='auto'>
-              <DropDownButton
-                items={filterPaymentList}
-                stylingMode='text'
-                text={paymentStatus}
-                dropDownOptions={dropDownOptions}
-                useSelectMode
-                onSelectionChanged={filterByJobPaymentStatus}
-              />
             </Item>
             <Item location='after' locateInMenu='auto'>
               <Button
@@ -362,10 +293,9 @@ export const OngoingJobsReport = () => {
             width={100}
           />
           <Column
-            dataField='PaymentDate'
-            caption='Payment Date'
-            dataType='date'
-            cellRender={(cell) => cellDateRender(cell, 'PaymentDate')}
+            dataField='vessel'
+            caption='Vessel'
+            width={120}
           />
           <Column
             dataField='TotalProfit'
@@ -390,41 +320,12 @@ export const OngoingJobsReport = () => {
             visible={false}
           />
           <Column
-            dataField='OperatingUserId'
-            caption='Operating User'
+            dataField='PaymentDate'
+            caption='Payment Date'
+            dataType='date'
+            cellRender={(cell) => cellDateRender(cell, 'PaymentDate')}
             visible={false}
           />
-          <Column
-            dataField='Tejrim'
-            caption='Tejrim'
-            visible={false}
-          />
-          <Column
-            dataField='CanceledJob'
-            caption='Canceled Job'
-            visible={false}
-          />
-          <Column
-            dataField='PendingCosts'
-            caption='Pending Costs'
-            visible={false}
-          />
-          <Column
-            dataField='FullPaid'
-            caption='Full Paid'
-            visible={false}
-          />
-          <Column
-            dataField='Status'
-            caption='Status'
-            visible={false}
-          />
-          <Column
-            dataField='JobStatusType'
-            caption='Job Type'
-            visible={false}
-          />
-
           <Summary>
             <GroupItem
               column='JobNo'
@@ -441,19 +342,7 @@ export const OngoingJobsReport = () => {
               }}
               showInGroupFooter
             />
-            <GroupItem
-              column='TotalInvoices'
-              summaryType='sum'
-              customizeText={(data) => {
-                const value = typeof data.value === 'number' ? data.value : 0;
-                const formattedValue = formatCurrency(value);
-                return `Totals: $${formattedValue}`;
-              }}
-              showInGroupFooter
-            />
           </Summary>
-          <SortByGroupSummaryInfo summaryItem='count' />
-
         </DataGrid>
       </div>
     </div>

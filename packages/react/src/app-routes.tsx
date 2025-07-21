@@ -16,8 +16,9 @@ import {
   OngoingJobsReport
 } from './pages';
 import { withNavigationWatcher } from './contexts/navigation';
-import { InvoiceStatusClientReport, OnWaterClientReport, UnderClearanceClientReport } from './pages/client-invoices/ClientInvoicesReport';
+import { InvoiceStatusClientReport, UnderClearanceClientReport } from './pages/client-invoices/ClientInvoicesReport';
 import { TobeLoadedClientReport } from './pages/client-invoices/TobeLoadedClientReport';
+import { OnWaterClientReport } from './pages/client-invoices/OnWaterClientReport';
 
 const routes = [
   {

@@ -592,17 +592,6 @@ export const ClientInvoicesReport = () => {
   );
 };
 
-export const OnWaterClientReport = () => {
-  return (
-    <div className='view crm-contact-list'>
-      <div className='view-wrapper view-wrapper-contact-list list-page'>
-        <h2>On Water Client Report</h2>
-        <p>This report is under development.</p>
-      </div>
-    </div>
-  );
-};
-
 export const UnderClearanceClientReport = () => {
   return (
     <div className='view crm-contact-list'>
