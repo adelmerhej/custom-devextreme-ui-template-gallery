@@ -172,8 +172,9 @@ export const TotalProfitReport = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [totalProfit, setTotalProfit] = useState<number>(0);
-  const [statusList, setStatusList] = useState('New');
-  const [statusListFilter, setStatusListFilter] = useState<string>('New');
+
+  const [statusList, setStatusList] = useState('All');
+  const [statusListFilter, setStatusListFilter] = useState<string>('All');
 
   let newContactData: ITotalProfit;
 
