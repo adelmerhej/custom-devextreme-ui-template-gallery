@@ -38,7 +38,6 @@ export async function fetchTotalProfits(
   params: {
     page?: number;
     limit?: number;
-    status?: string;
     statusType?: string;
     token?: string;
   } = {}
@@ -49,7 +48,6 @@ export async function fetchTotalProfits(
 
     if (params.page) queryParams.set('page', params.page.toString());
     if (params.limit) queryParams.set('limit', params.limit.toString());
-    if (params.status) queryParams.set('status', params.status);
     if (params.statusType) queryParams.set('statusType', params.statusType);
 
     // Get the query string
