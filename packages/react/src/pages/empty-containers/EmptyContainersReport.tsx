@@ -204,7 +204,7 @@ export const EmptyContainersReport = () => {
       if (!result.success) {
         throw new Error('Failed to sync Empty Containers', result);
       }
-      refresh();
+      loadEmptyContainersData();
       notify('Empty Containers data synced successfully', 'success', 3000);
     } catch (error) {
       console.error('Error loading Empty Containers:', error);

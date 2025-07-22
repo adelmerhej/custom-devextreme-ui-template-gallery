@@ -276,7 +276,7 @@ export const JobStatusReport = () => {
       if (!result.success) {
         throw new Error('Failed to sync Job Status', result);
       }
-      refresh();
+      loadJobStatusesData();
       notify('Job Status data synced successfully', 'success', 3000);
     } catch (error) {
       console.error('Error loading Job Status:', error);

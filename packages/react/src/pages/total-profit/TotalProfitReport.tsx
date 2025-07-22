@@ -246,7 +246,7 @@ export const TotalProfitReport = () => {
       if (!result.success) {
         throw new Error('Failed to sync Total Profit', result);
       }
-      refresh();
+      loadTotalProfitsData();
       notify('Total Profit data synced successfully', 'success', 3000);
     } catch (error) {
       console.error('Error loading Total Profit:', error);

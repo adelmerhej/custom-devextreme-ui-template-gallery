@@ -184,7 +184,7 @@ export const ClientInvoicesReport = () => {
       if (!result.success) {
         throw new Error('Failed to sync Client Invoices', result);
       }
-      refresh();
+      loadClientInvoicesData();
       notify('Client Invoices data synced successfully', 'success', 3000);
     } catch (error) {
       console.error('Error loading client invoices:', error);

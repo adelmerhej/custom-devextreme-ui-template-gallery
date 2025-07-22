@@ -262,7 +262,7 @@ export const OngoingJobsReport = () => {
       if (!result.success) {
         throw new Error('Failed to sync Ongoing Jobs', result);
       }
-      refresh();
+      loadOngoingJobsData();
       notify('Ongoing Jobs data synced successfully', 'success', 3000);
     } catch (error) {
       console.error('Error loading Ongoing Jobs:', error);
