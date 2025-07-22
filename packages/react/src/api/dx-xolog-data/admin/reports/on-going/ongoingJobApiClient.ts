@@ -67,7 +67,6 @@ export async function fetchOngoingJobs(params: {
     }
 
     params.token = token;
-
     const data = await getData(queryString, params.token);
 
     // Return the data directly - assuming the API returns the expected format

@@ -126,11 +126,11 @@ export const UnderClearanceClientReport = () => {
       page: number;
       limit: number;
       fullPaid?: string;
-      statusType?: string; // Add status type filter
+      jobStatusType?: string; // Add status type filter
     } = {
       page: 1,
       limit: 0,
-      statusType: 'Under Clearance' // Filter only "Under Clearance" data
+      jobStatusType: 'Under Clearance' // Filter only "Under Clearance" data
     };
 
     // Add payment status filter if set
