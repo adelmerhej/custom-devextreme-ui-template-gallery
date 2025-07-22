@@ -248,6 +248,7 @@ export const TobeLoadedClientReport = () => {
             dataType='date'
             width={100}
             cellRender={(cell) => cellDateRender(cell, 'JobDate')}
+            visible={false}
           />
           <Column
             dataField='ReferenceNo'
@@ -256,11 +257,41 @@ export const TobeLoadedClientReport = () => {
             width={100}
           />
           <Column
-            dataField='CustomerName'
-            caption='Customer'
+            dataField='ConsigneeName'
+            caption='Consignee'
             dataType='string'
             width={250}
             cellRender={cellNameRender}
+          />
+          <Column
+            dataField='MemberOf'
+            caption='Member Of'
+            visible={false}
+          />
+          <Column
+            dataField='Volume'
+            caption='Volume'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='CountryOfDeparture'
+            caption='Origin'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='CountryOfDestination'
+            caption='Destination'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='Etd'
+            caption='ETD'
+            dataType='date'
+            width={100}
+            cellRender={(cell) => cellDateRender(cell, 'Etd')}
           />
           <Column
             dataField='Eta'
@@ -270,42 +301,48 @@ export const TobeLoadedClientReport = () => {
             cellRender={(cell) => cellDateRender(cell, 'Eta')}
           />
           <Column
-            dataField='Ata'
-            caption='ATA'
+            dataField='CarrierName'
+            caption='Sea Carrier'
+            width={100}
+          />
+          <Column
+            dataField='LoadingDate'
+            caption='Loading Date'
             dataType='date'
             width={100}
-            cellRender={(cell) => cellDateRender(cell, 'Ata')}
+            cellRender={(cell) => cellDateRender(cell, 'LoadingDate')}
+          />
+          <Column
+            dataField='CutOffDate'
+            caption='Cut Off Date'
+            dataType='date'
+            width={100}
+            cellRender={(cell) => cellDateRender(cell, 'CutOffDate')}
+          />
+          <Column
+            dataField='SpaceReleased'
+            caption='Space Released'
+            width={100}
+          />
+          <Column
+            dataField='Bl'
+            caption='BL#'
+            width={100}
+          />
+          <Column
+            dataField='Status'
+            caption='Status'
+            width={100}
           />
           <Column
             dataField='StatusType'
             caption='Status Type'
             width={100}
-          />
-          <Column
-            dataField='TotalProfit'
-            caption='Total Profit'
-            dataType='number'
-            cellRender={cellProfitRender}
-            format='currency'
+            visible={false}
           />
           <Column
             dataField='DepartmentName'
             caption='Department Name'
-            visible={false}
-          />
-          <Column
-            dataField='Arrival'
-            caption='Arrival'
-            visible={false}
-          />
-          <Column
-            dataField='MemberOf'
-            caption='Member Of'
-            visible={false}
-          />
-          <Column
-            dataField='vessel'
-            caption='Vessel'
             visible={false}
           />
           <Summary>
@@ -313,15 +350,6 @@ export const TobeLoadedClientReport = () => {
               column='JobNo'
               summaryType='count'
               displayFormat='{0} jobs'
-            />
-            <GroupItem
-              column='TotalProfit'
-              summaryType='sum'
-              customizeText={(data) => {
-                const value = typeof data.value === 'number' ? data.value : 0;
-                const formattedValue = formatCurrency(value);
-                return `Totals: $${formattedValue}`;
-              }}
               showInGroupFooter
             />
           </Summary>
