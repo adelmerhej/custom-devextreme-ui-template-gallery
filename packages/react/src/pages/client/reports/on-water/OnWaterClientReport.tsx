@@ -247,6 +247,7 @@ export const OnWaterClientReport = () => {
             caption='Job Date'
             dataType='date'
             width={100}
+            visible={false}
             cellRender={(cell) => cellDateRender(cell, 'JobDate')}
           />
           <Column
@@ -256,11 +257,63 @@ export const OnWaterClientReport = () => {
             width={100}
           />
           <Column
-            dataField='CustomerName'
-            caption='Customer'
+            dataField='ShipperName'
+            caption='Shipper'
             dataType='string'
             width={250}
             cellRender={cellNameRender}
+          />
+          <Column
+            dataField='ConsigneeName'
+            caption='Consignee'
+            dataType='string'
+            width={250}
+            cellRender={cellNameRender}
+          />
+          <Column
+            dataField='MemberOf'
+            caption='Member Of'
+            dataType='string'
+            width={250}
+            cellRender={cellNameRender}
+            visible={false}
+          />
+          <Column
+            dataField='Volume'
+            caption='Volume'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='CountryOfDeparture'
+            caption='Country Of Departure'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='Departure'
+            caption='POL'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='CountryOfDestination'
+            caption='Country Of Destination'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='Destination'
+            caption='POD'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='Atd'
+            caption='ATD'
+            dataType='date'
+            width={100}
+            cellRender={(cell) => cellDateRender(cell, 'Atd')}
           />
           <Column
             dataField='Eta'
@@ -270,11 +323,14 @@ export const OnWaterClientReport = () => {
             cellRender={(cell) => cellDateRender(cell, 'Eta')}
           />
           <Column
-            dataField='Ata'
-            caption='ATA'
-            dataType='date'
+            dataField='CarrierName'
+            caption='Sea Carrier'
             width={100}
-            cellRender={(cell) => cellDateRender(cell, 'Ata')}
+          />
+          <Column
+            dataField='Fod'
+            caption='FOD'
+            width={100}
           />
           <Column
             dataField='StatusType'

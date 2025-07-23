@@ -276,13 +276,25 @@ export const TobeLoadedClientReport = () => {
           />
           <Column
             dataField='CountryOfDeparture'
-            caption='Origin'
+            caption='Country Of Departure'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='Departure'
+            caption='POL'
             dataType='string'
             width={100}
           />
           <Column
             dataField='CountryOfDestination'
-            caption='Destination'
+            caption='Country Of Destination'
+            dataType='string'
+            width={100}
+          />
+          <Column
+            dataField='Destination'
+            caption='POD'
             dataType='string'
             width={100}
           />
