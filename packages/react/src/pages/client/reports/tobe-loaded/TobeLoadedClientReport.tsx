@@ -141,6 +141,20 @@ export const TobeLoadedClientReport = () => {
     return date ? new Date(date).toLocaleDateString() : '';
   };
 
+  const cellSpaceReleasedRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
+    const isReleased = cell.data.SpaceReleased;
+    return (
+      <input
+        type='checkbox'
+        checked={isReleased}
+        readOnly
+        style={{
+          accentColor: isReleased ? '#F44336' : '#4CAF50',
+        }}
+      />
+    );
+  };
+
   const onExporting = (e: DataGridTypes.ExportingEvent) => {
     if (e.format === 'pdf') {
       const doc = new JsPdf();
@@ -336,6 +350,7 @@ export const TobeLoadedClientReport = () => {
             caption='Space Released'
             dataType='boolean'
             width={100}
+            cellRender={cellSpaceReleasedRender}
           />
           <Column
             dataField='Bl'
