@@ -142,16 +142,40 @@ export const TobeLoadedClientReport = () => {
   };
 
   const cellSpaceReleasedRender = (cell: DataGridTypes.ColumnCellTemplateData) => {
-    const isReleased = cell.data.SpaceReleased;
+    const spaceReleasedValue = cell.data.SpaceReleased;
+
+    // Debug: Log the actual value and the entire data object to console
+    console.log('Full cell data:', cell.data);
+    console.log('SpaceReleased value:', spaceReleasedValue, 'Type:', typeof spaceReleasedValue);
+
+    // Handle different data types that might represent boolean values
+    let isReleased = false;
+    if (typeof spaceReleasedValue === 'boolean') {
+      isReleased = spaceReleasedValue;
+    } else if (typeof spaceReleasedValue === 'string') {
+      isReleased = spaceReleasedValue.toLowerCase() === 'true' || spaceReleasedValue === '1' || spaceReleasedValue.toLowerCase() === 'yes';
+    } else if (typeof spaceReleasedValue === 'number') {
+      isReleased = spaceReleasedValue === 1;
+    } else if (spaceReleasedValue === null || spaceReleasedValue === undefined) {
+      // Default to false for null/undefined values
+      isReleased = false;
+    }
+
     return (
-      <input
-        type='checkbox'
-        checked={isReleased}
-        readOnly
-        style={{
-          accentColor: isReleased ? '#F44336' : '#4CAF50',
-        }}
-      />
+      <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          color: isReleased ? '#4CAF50' : '#F44336',
+          fontWeight: 'bold',
+          fontSize: '16px'
+        }}>
+          {isReleased ? '✓' : '✗'}
+        </span>
+        <span style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
+          {isReleased ? 'Released' : 'Not Released'}
+        </span>
+      </div>
     );
   };
 
