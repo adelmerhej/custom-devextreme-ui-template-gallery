@@ -334,6 +334,7 @@ export const TobeLoadedClientReport = () => {
           <Column
             dataField='SpaceReleased'
             caption='Space Released'
+            dataType='boolean'
             width={100}
           />
           <Column
