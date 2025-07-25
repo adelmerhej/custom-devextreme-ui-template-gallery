@@ -517,6 +517,12 @@ export const OngoingJobsReport = () => {
             cellRender={(cell) => cellDateRender(cell, 'Ata')}
           />
           <Column
+            dataField='Volume'
+            caption='Volume'
+            dataType='string'
+            width={100}
+          />
+          <Column
             dataField='StatusType'
             caption='Status Type'
             width={100}
