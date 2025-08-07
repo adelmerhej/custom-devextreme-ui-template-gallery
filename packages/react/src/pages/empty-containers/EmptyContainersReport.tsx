@@ -570,8 +570,7 @@ export const EmptyContainersReport = () => {
           <Column
             dataField='Notes'
             caption='Notes'
-            width={100}
-            visible={false}
+            width={150}
           />
           <Column
             dataField='Departure'

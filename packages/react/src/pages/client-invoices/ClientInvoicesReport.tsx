@@ -509,7 +509,7 @@ export const ClientInvoicesReport = () => {
           />
           <Column
             dataField='TotalInvoices'
-            caption='Total Invoices New'
+            caption='Remaining Invoices'
             dataType='number'
             format='currency'
             width={120}
