@@ -50,7 +50,7 @@ export const navigation = [
     ],
   },
   {
-    text: 'KPI nalytics',
+    text: 'KPI Analytics',
     icon: 'chart',
     path: '',
     items: [
