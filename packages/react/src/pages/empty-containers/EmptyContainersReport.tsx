@@ -170,11 +170,24 @@ const formatCurrency = (amount: number): string => {
   });
 };
 
+// Helper: normalize _id to primitive & return clean array, add synthetic stable row key
+const normalizeEmptyContainers = (items: any[]) =>
+  items.map((item: any, idx: number) => {
+    let normalizedId = item?._id;
+    if (normalizedId && typeof normalizedId === 'object' && '$oid' in normalizedId) {
+      normalizedId = (normalizedId as any).$oid;
+    }
+    // Prefer JobNo (appears numeric) else normalized _id else position index
+    const syntheticKey = item?.JobNo ?? normalizedId ?? idx;
+    return { ...item, _id: normalizedId, __rowId: syntheticKey };
+  });
+
 export const EmptyContainersReport = () => {
   // Get auth context for token access (when auth system includes tokens)
   const { user } = useAuth();
 
-  const [gridDataSource, setGridDataSource] = useState<DataSource<IEmptyContainer[], string>>();
+  // DataSource generic should be the item type, not the array type
+  const [gridDataSource, setGridDataSource] = useState<DataSource<IEmptyContainer, string>>();
   const [isPanelOpened, setPanelOpened] = useState(false);
   const [contactId, setContactId] = useState<number>(0);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -259,20 +272,33 @@ export const EmptyContainersReport = () => {
       }
     }
 
-    console.log('Loading empty containers with params:', params);
-
     const data = await fetchEmptyContainers(params);
+
+    console.log('Fetched Empty Containers data:', data);
+
     return data;
   }, [paymentStatusFilter, departmentFilter]);
 
   useEffect(() => {
     setGridDataSource(new DataSource({
-      key: '_id',
+      key: '__rowId', // synthetic stable primitive key
       load: async() => {
-        const data = await loadEmptyContainersData();
-        // If data has items, return items, else return data
-        const returnedData = Array.isArray(data) ? data : (data?.items || []);
-        return returnedData;
+        const raw = await loadEmptyContainersData();
+        const array = Array.isArray(raw) ? raw : (raw?.items || []);
+        if (array.length) {
+          const first = array[0];
+          console.log('[EmptyContainers] raw count:', array.length);
+          console.log('[EmptyContainers] first item keys:', Object.keys(first));
+          console.log('[EmptyContainers] first item sample:', first);
+        } else {
+          console.log('[EmptyContainers] empty array received');
+        }
+        const normalized = normalizeEmptyContainers(array);
+        if (normalized.length) {
+          console.log('[EmptyContainers] normalized first item keys:', Object.keys(normalized[0]));
+          console.log('[EmptyContainers] normalized first item sample:', normalized[0]);
+        }
+        return normalized;
       },
     }));
   }, [loadEmptyContainersData]);
@@ -335,19 +361,20 @@ export const EmptyContainersReport = () => {
 
   const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
-
     if (departement === 'All') {
       setDepartmentFilter(null);
     } else {
       setDepartmentFilter(departement);
     }
-
     setDepartements(departement);
-
-    // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadEmptyContainersData,
+      key: '__rowId', // keep consistent with main DataSource
+      load: async() => {
+        const raw = await loadEmptyContainersData();
+        const array = Array.isArray(raw) ? raw : (raw?.items || []);
+        const normalized = normalizeEmptyContainers(array);
+        return normalized;
+      },
     }));
   }, [loadEmptyContainersData]);
 
@@ -357,19 +384,20 @@ export const EmptyContainersReport = () => {
 
   const filterByJobPaymentStatus = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: paymentStatus }: { item: FilterJobStatusPaymentType } = e;
-
     if (paymentStatus === 'All') {
       setPaymentStatusFilter(null);
     } else {
       setPaymentStatusFilter(paymentStatus);
     }
-
     setPaymentStatus(paymentStatus);
-
-    // Refresh the grid data source with new filter
     setGridDataSource(new DataSource({
-      key: '_id',
-      load: loadEmptyContainersData,
+      key: '__rowId',
+      load: async() => {
+        const raw = await loadEmptyContainersData();
+        const array = Array.isArray(raw) ? raw : (raw?.items || []);
+        const normalized = normalizeEmptyContainers(array);
+        return normalized;
+      },
     }));
   }, [loadEmptyContainersData]);
 
@@ -382,6 +410,7 @@ export const EmptyContainersReport = () => {
           focusedRowEnabled
           height='100%'
           dataSource={gridDataSource}
+          keyExpr='__rowId' // explicitly tell DataGrid which field is the key
           onRowPrepared={onRowPrepared}
           onExporting={onExporting}
           onContentReady={onContentReady}
@@ -396,6 +425,11 @@ export const EmptyContainersReport = () => {
             visible: true,
           }}
         >
+          {/* DEBUG TIP: If grid still empty, temporarily replace dataSource prop with a plain array:
+              const [debugData, setDebugData] = useState<any[]>([]);
+              After load, setDebugData(normalized);
+              Then set <DataGrid dataSource={debugData} ... /> to isolate DataSource wrapper issues.
+          */}
           <Grouping contextMenuEnabled />
           <GroupPanel visible /> {/* or "auto" */}
           <Paging defaultPageSize={100} />
