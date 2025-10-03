@@ -251,14 +251,8 @@ export const EmptyContainersReport = () => {
     params.SortOrder = SortOrder;
 
     // Add payment status filter if set
-    if (paymentStatusFilter) {
-      if (paymentStatusFilter === 'Full Paid') {
-        params.fullPaid = 'true';
-      } else if (paymentStatusFilter === 'Not Paid') {
-        params.fullPaid = 'false';
-      }else {
-        params.fullPaid = undefined;
-      }
+    if (paymentStatusFilter && paymentStatusFilter !== 'All') {
+      params.fullPaid = paymentStatusFilter === 'Full Paid' ? 'true' : 'false';
     }
 
     // Add department filter if set
@@ -274,33 +268,35 @@ export const EmptyContainersReport = () => {
 
     const data = await fetchEmptyContainers(params);
 
-    console.log('Fetched Empty Containers data:', data);
-
     return data;
   }, [paymentStatusFilter, departmentFilter]);
 
   useEffect(() => {
-    setGridDataSource(new DataSource({
-      key: '__rowId', // synthetic stable primitive key
+    console.log('Setting up DataSource...');
+    const dataSource = new DataSource({
+      key: '__rowId',
       load: async() => {
+        console.log('DataSource load called');
         const raw = await loadEmptyContainersData();
+        console.log('Raw data from API:', raw);
+
         const array = Array.isArray(raw) ? raw : (raw?.items || []);
-        if (array.length) {
-          const first = array[0];
-          console.log('[EmptyContainers] raw count:', array.length);
-          console.log('[EmptyContainers] first item keys:', Object.keys(first));
-          console.log('[EmptyContainers] first item sample:', first);
-        } else {
-          console.log('[EmptyContainers] empty array received');
-        }
+        console.log('Array length:', array.length);
+
         const normalized = normalizeEmptyContainers(array);
-        if (normalized.length) {
-          console.log('[EmptyContainers] normalized first item keys:', Object.keys(normalized[0]));
-          console.log('[EmptyContainers] normalized first item sample:', normalized[0]);
-        }
+        console.log('Normalized data (returning plain array now):', normalized);
+
+        // IMPORTANT: For a CustomStore style inline load, return an array (object form only when requireTotalCount is true)
         return normalized;
       },
-    }));
+    });
+
+    // Test the data source immediately
+    dataSource.load().then(result => {
+      console.log('DataSource initial load result (expect array):', result);
+    });
+
+    setGridDataSource(dataSource);
   }, [loadEmptyContainersData]);
 
   // Highlight rows based on specific conditions
@@ -320,6 +316,11 @@ export const EmptyContainersReport = () => {
     try {
       const gridInstance = e.component;
       const dataSource = gridInstance.getDataSource();
+      // Expose grid instance globally for debugging
+
+      (window as any).__emptyContainersGrid = gridInstance;
+      const vis = gridInstance.getVisibleRows();
+      console.log('[EmptyContainers] onContentReady visible rows:', vis.length, vis.slice(0, 3));
 
       if (dataSource) {
         // Get all items from the data source (this includes filtered data but not grouped)
@@ -331,10 +332,12 @@ export const EmptyContainersReport = () => {
           setTotalProfit(total);
         } else {
           // If items() doesn't work, load the data directly
-          dataSource.load().then((data: IEmptyContainer[]) => {
-            const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+          dataSource.load().then((data: IEmptyContainer[] | any) => {
+            const arr = Array.isArray(data) ? data : (data?.data || []);
+            const total = arr.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
             setTotalProfit(total);
-          }).catch(() => {
+          }).catch((err: any) => {
+            console.warn('Profit fallback load failed:', err);
             setTotalProfit(0);
           });
         }
@@ -348,16 +351,29 @@ export const EmptyContainersReport = () => {
   // Additional calculation when gridDataSource changes (for safety)
   useEffect(() => {
     if (gridDataSource) {
-      gridDataSource.load().then((data: IEmptyContainer[]) => {
-        if (Array.isArray(data)) {
-          const total = data.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
+      gridDataSource.load().then((data: IEmptyContainer[] | any) => {
+        const arr = Array.isArray(data) ? data : (data?.data || []);
+        if (Array.isArray(arr)) {
+          const total = arr.reduce((sum, item) => sum + (item.TotalProfit || 0), 0);
           setTotalProfit(total);
         }
-      }).catch(() => {
+      }).catch((err: any) => {
+        console.warn('Initial recalc load failed:', err);
         setTotalProfit(0);
       });
     }
   }, [gridDataSource]);
+
+  // Provide a global debug helper after mount
+  useEffect(() => {
+    (window as any).dumpEmptyContainers = () => {
+      const inst = gridRef.current?.instance?.();
+      const ds = inst?.getDataSource();
+      console.log('[EmptyContainers] dump items():', ds?.items());
+      console.log('[EmptyContainers] dump store raw data (private):', (ds as any)?._items);
+      console.log('[EmptyContainers] visible rows:', inst?.getVisibleRows());
+    };
+  }, []);
 
   const filterByJobDepartment = useCallback((e: DropDownButtonTypes.SelectionChangedEvent) => {
     const { item: departement }: { item: FilterJobStatusDepartmentType } = e;
@@ -408,12 +424,14 @@ export const EmptyContainersReport = () => {
           className='grid theme-dependent'
           noDataText=''
           focusedRowEnabled
-          height='100%'
+          // Set an explicit pixel height to avoid 0px collapse issues while debugging
+          height={600}
           dataSource={gridDataSource}
           keyExpr='__rowId' // explicitly tell DataGrid which field is the key
           onRowPrepared={onRowPrepared}
           onExporting={onExporting}
           onContentReady={onContentReady}
+          onDataErrorOccurred={(err) => console.error('[EmptyContainers] Data error event:', err.error)}
           allowColumnReordering
           showBorders
           ref={gridRef}
@@ -445,7 +463,8 @@ export const EmptyContainersReport = () => {
           />
           <HeaderFilter visible />
           <Sorting mode='multiple' />
-          <Scrolling mode='virtual' />
+          {/* Disable virtual scrolling temporarily to rule out rendering issues */}
+          <Scrolling mode='standard' />
           <Toolbar>
             <Item location='before'>
               <div className='grid-header'>Empty Container Report</div>
