@@ -259,6 +259,8 @@ export const EmptyContainersReport = () => {
       }
     }
 
+    console.log('Loading empty containers with params:', params);
+
     const data = await fetchEmptyContainers(params);
     return data;
   }, [paymentStatusFilter, departmentFilter]);
